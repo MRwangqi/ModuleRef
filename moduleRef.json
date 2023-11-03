@@ -97,7 +97,8 @@
                 "[Ljava/lang/Object;"
             ],
             "fields":[
-
+                "Landroidx/compose/ui/layout/Placeable.$placeables",
+                "Landroidx/compose/animation/EnterExitState.$VALUES"
             ],
             "methods":[
                 "androidx/compose/animation/AnimatedContentMeasurePolicy_androidx/compose/ui/layout/Measurable.getParentData(()Ljava/lang/Object;)",
@@ -148,7 +149,23 @@
                 "[Ljava/lang/Object;"
             ],
             "fields":[
-
+                "Ljava/lang/Object.$nodes",
+                "Landroidx/compose/runtime/ProvidedValue.$values",
+                "Landroidx/compose/runtime/InvalidationResult.$VALUES",
+                "Landroidx/compose/runtime/Recomposer$State.$VALUES",
+                "Ljava/lang/Object.slots",
+                "Ljava/lang/Object.keys",
+                "Ljava/lang/Object.values",
+                "Landroidx/compose/runtime/collection/IdentityArraySet.scopeSets",
+                "Ljava/lang/Object.content",
+                "Ljava/lang/Object.buffer",
+                "Ljava/lang/Object.root",
+                "Ljava/lang/Object.tail",
+                "Ljava/lang/Object.vectorRoot",
+                "Ljava/lang/Object.vectorTail",
+                "Ljava/lang/Object.path",
+                "Landroidx/compose/runtime/external/kotlinx/collections/immutable/implementations/immutableMap/TrieNodeBaseIterator.path",
+                "Ljava/lang/Object.$args"
             ],
             "methods":[
                 "androidx/compose/runtime/ComposerKt_androidx/compose/runtime/external/kotlinx/collections/immutable/PersistentMap.containsKey((Ljava/lang/Object;)Z)",
@@ -207,7 +224,28 @@
                 "sun/misc/Signal"
             ],
             "fields":[
-
+                "Lkotlinx/coroutines/Deferred.deferreds",
+                "Lkotlinx/coroutines/scheduling/CoroutineScheduler$WorkerState.$VALUES",
+                "Ljava/lang/Object.values",
+                "Lkotlinx/coroutines/ThreadContextElement.elements",
+                "Ljava/lang/Object.elements",
+                "Lkotlinx/coroutines/internal/ThreadSafeHeapNode.a",
+                "Lkotlinx/coroutines/AwaitAll$AwaitAllNode.nodes",
+                "Lkotlinx/coroutines/flow/Flow.$flows$inlined",
+                "Lkotlinx/coroutines/flow/Flow.$flowArray$inlined",
+                "Lkotlinx/coroutines/flow/Flow.$flows",
+                "Lkotlin/coroutines/Continuation.EMPTY_RESUMES",
+                "Lkotlinx/coroutines/flow/internal/AbstractSharedFlowSlot.slots",
+                "Ljava/lang/Object.buffer",
+                "Lkotlinx/coroutines/flow/Flow.$flowArray",
+                "Lkotlinx/coroutines/flow/SharingCommand.$VALUES",
+                "Ljava/lang/Object.$elements$inlined",
+                "Ljava/lang/Object.$this_asFlow$inlined",
+                "Lkotlinx/coroutines/channels/ConflatedBroadcastChannel$Subscriber.subscribers",
+                "Lkotlinx/coroutines/channels/TickerMode.$VALUES",
+                "Lkotlinx/coroutines/channels/ReceiveChannel.$channels",
+                "Lkotlinx/coroutines/channels/BufferOverflow.$VALUES",
+                "Lkotlinx/coroutines/CoroutineStart.$VALUES"
             ],
             "methods":[
                 "kotlinx/coroutines/AwaitAll_kotlinx/coroutines/Deferred.start(()Z)",
@@ -311,7 +349,7 @@
 
             ],
             "fields":[
-
+                "Ljava/lang/Class.ACCEPTABLE_CLASSES"
             ],
             "methods":[
                 "androidx/lifecycle/SavedStateHandleSupport_androidx/savedstate/SavedStateRegistryOwner.getLifecycle(()Landroidx/lifecycle/Lifecycle;)",
@@ -348,6 +386,7 @@
                 "androidx/compose/animation/tooling/TransitionInfo"
             ],
             "fields":[
+                "Ljava/lang/Object.$previewParameters",
                 "androidx/compose/animation/tooling/ComposeAnimationType.type"
             ],
             "methods":[
@@ -377,7 +416,28 @@
                 "[Landroidx/core/graphics/BlendModeCompat;"
             ],
             "fields":[
-
+                "Ljava/lang/String.val$permissions",
+                "Landroid/util/SparseIntArray.mMetrics",
+                "Landroidx/core/app/RemoteInput.mRemoteInputs",
+                "Landroidx/core/app/RemoteInput.mDataOnlyRemoteInputs",
+                "Ljava/lang/CharSequence.mRemoteInputHistory",
+                "Ljava/lang/String.mMessages",
+                "Ljava/lang/String.mParticipants",
+                "Ljava/lang/CharSequence.mChoices",
+                "Ljava/lang/String.COLUMNS",
+                "Landroid/content/Intent.mIntents",
+                "Landroidx/core/app/Person.mPersons",
+                "Landroidx/core/content/res/FontResourcesParserCompat$FontFileResourceEntry.mEntries",
+                "Landroidx/core/graphics/BlendModeCompat.$VALUES",
+                "Ljava/util/Locale.mList",
+                "Ljava/util/Locale.sEmptyList",
+                "Landroidx/core/provider/FontsContractCompat$FontInfo.mFonts",
+                "Landroidx/core/text/util/FindAddress$ZipRange.sStateZipCodeRanges",
+                "Ljava/lang/String.EMPTY_STRING",
+                "Ljava/lang/Object.mPool",
+                "Landroidx/core/graphics/Insets.mInsetsTypeMask",
+                "Landroidx/core/graphics/Insets.mOverriddenInsets",
+                "Ljava/lang/String.EMPTY_STRING_ARRAY"
             ],
             "methods":[
                 "android/support/v4/app/INotificationSideChannel$Stub_android/support/v4/app/INotificationSideChannel$Stub.notify((Ljava/lang/String;ILjava/lang/String;Landroid/app/Notification;)V)",
@@ -420,7 +480,8 @@
                 "[Landroidx/annotation/experimental/Experimental$Level;"
             ],
             "fields":[
-
+                "Landroidx/annotation/RequiresOptIn$Level.$VALUES",
+                "Landroidx/annotation/experimental/Experimental$Level.$VALUES"
             ],
             "methods":[
 
@@ -477,7 +538,15 @@
                 "[I"
             ],
             "fields":[
-
+                "Ljava/lang/Object.OBJECT",
+                "Ljava/lang/Object.sBaseCache",
+                "Ljava/lang/Object.sTwiceBaseCache",
+                "Ljava/lang/Object.mArray",
+                "Ljava/lang/Object.mElements",
+                "Ljava/lang/Object.EMPTY_OBJECTS",
+                "Ljava/lang/Object.mValues",
+                "Ljava/lang/Object.mBaseCache",
+                "Ljava/lang/Object.mTwiceBaseCache"
             ],
             "methods":[
 
@@ -516,7 +585,8 @@
                 "[Ljava/lang/Object;"
             ],
             "fields":[
-
+                "Landroidx/annotation/InspectableProperty$ValueType.$VALUES",
+                "Landroidx/annotation/RestrictTo$Scope.$VALUES"
             ],
             "methods":[
 
@@ -558,7 +628,12 @@
                 "androidx/compose/ui/R$id"
             ],
             "fields":[
-
+                "Landroidx/compose/ui/layout/Placeable.$placeables",
+                "Landroidx/compose/foundation/layout/Direction.$VALUES",
+                "Landroidx/compose/foundation/layout/IntrinsicSize.$VALUES",
+                "Landroidx/compose/foundation/layout/LayoutOrientation.$VALUES",
+                "Landroidx/compose/foundation/layout/RowColumnParentData.$rowColumnParentData",
+                "Landroidx/compose/foundation/layout/SizeMode.$VALUES"
             ],
             "methods":[
                 "androidx/compose/foundation/layout/AlignmentLineKt_androidx/compose/ui/layout/Placeable.get((Landroidx/compose/ui/layout/AlignmentLine;)I)",
@@ -605,7 +680,8 @@
                 "[Ljava/lang/Object;"
             ],
             "fields":[
-
+                "Landroidx/compose/ui/unit/LayoutDirection.$VALUES",
+                "Landroidx/compose/ui/unit/TextUnitType.TextUnitTypes"
             ],
             "methods":[
 
@@ -621,7 +697,10 @@
                 "[Ljava/lang/Object;"
             ],
             "fields":[
-
+                "Ljava/nio/file/LinkOption.nofollowLinkOption",
+                "Ljava/nio/file/LinkOption.followLinkOption",
+                "Lkotlin/io/path/PathWalkOption.options",
+                "Lkotlin/io/path/PathWalkOption.$VALUES"
             ],
             "methods":[
 
@@ -638,7 +717,9 @@
                 "[Landroidx/lifecycle/Lifecycle$State;"
             ],
             "fields":[
-
+                "Landroidx/lifecycle/GeneratedAdapter.mGeneratedAdapters",
+                "Landroidx/lifecycle/Lifecycle$Event.$VALUES",
+                "Landroidx/lifecycle/Lifecycle$State.$VALUES"
             ],
             "methods":[
 
@@ -686,7 +767,7 @@
                 "[Landroidx/concurrent/futures/DirectExecutor;"
             ],
             "fields":[
-
+                "Landroidx/concurrent/futures/DirectExecutor.$VALUES"
             ],
             "methods":[
                 "androidx/concurrent/futures/AbstractResolvableFuture_com/google/common/util/concurrent/ListenableFuture.cancel((Z)Z)",
@@ -742,7 +823,7 @@
                 "androidx/lifecycle/viewmodel/R$id"
             ],
             "fields":[
-
+                "Landroidx/lifecycle/viewmodel/ViewModelInitializer.initializers"
             ],
             "methods":[
 
@@ -779,7 +860,17 @@
                 "androidx/compose/ui/R$id"
             ],
             "fields":[
-
+                "Landroidx/compose/material3/DrawerValue.$VALUES",
+                "Landroidx/compose/material3/InputPhase.$VALUES",
+                "Landroidx/compose/material3/ScaffoldLayoutContent.$VALUES",
+                "Landroidx/compose/material3/SliderComponents.$VALUES",
+                "Landroidx/compose/material3/SnackbarDuration.$VALUES",
+                "Landroidx/compose/material3/SnackbarResult.$VALUES",
+                "Landroidx/compose/material3/TabSlots.$VALUES",
+                "Landroidx/compose/material3/TextFieldType.$VALUES",
+                "Landroidx/compose/material3/tokens/ColorSchemeKeyTokens.$VALUES",
+                "Landroidx/compose/material3/tokens/ShapeKeyTokens.$VALUES",
+                "Landroidx/compose/material3/tokens/TypographyKeyTokens.$VALUES"
             ],
             "methods":[
                 "androidx/compose/material3/AlertDialogKt$AlertDialogFlowRow$1$measure$1_androidx/compose/ui/layout/MeasureScope.roundToPx-0680j_4((F)I)",
@@ -910,7 +1001,46 @@
                 "[Ljava/lang/Object;"
             ],
             "fields":[
-
+                "Lkotlin/reflect/KClass.EMPTY_K_CLASS_ARRAY",
+                "Lkotlin/DeprecationLevel.$VALUES",
+                "Lkotlin/Experimental$Level.$VALUES",
+                "Lkotlin/LazyThreadSafetyMode.$VALUES",
+                "Lkotlin/RequiresOptIn$Level.$VALUES",
+                "Lkotlin/annotation/AnnotationRetention.$VALUES",
+                "Lkotlin/annotation/AnnotationTarget.$VALUES",
+                "Ljava/lang/Object.values",
+                "Ljava/lang/Object.elementData",
+                "Ljava/lang/Object.emptyElementData",
+                "Ljava/lang/Object.$this_asIterable$inlined",
+                "Ljava/lang/Object.$this_asSequence$inlined",
+                "Ljava/lang/Object.$this_groupingBy",
+                "Ljava/lang/Object.$this_withIndex",
+                "Ljava/lang/Object.buffer",
+                "Lkotlin/collections/State.$VALUES",
+                "Ljava/lang/Object.array",
+                "Ljava/lang/Object.keysArray",
+                "Ljava/lang/Object.valuesArray",
+                "Lkotlin/jvm/functions/Function1.$selectors",
+                "Lkotlin/contracts/InvocationKind.$VALUES",
+                "Lkotlin/coroutines/CoroutineContext.elements",
+                "Lkotlin/coroutines/CoroutineContext.$elements",
+                "Lkotlin/coroutines/intrinsics/CoroutineSingletons.$VALUES",
+                "Lkotlin/internal/RequireKotlinVersionKind.$VALUES",
+                "Ljava/io/File.fileList",
+                "Lkotlin/io/FileWalkDirection.$VALUES",
+                "Lkotlin/io/OnErrorAction.$VALUES",
+                "Ljava/lang/Object.EMPTY",
+                "Ljava/lang/Object.spreads",
+                "Lkotlin/reflect/KParameter$Kind.$VALUES",
+                "Lkotlin/reflect/KVariance.$VALUES",
+                "Lkotlin/reflect/KVisibility.$VALUES",
+                "Ljava/lang/reflect/Type.typeArguments",
+                "Ljava/lang/Object.$elements",
+                "Lkotlin/text/CharCategory.$VALUES",
+                "Lkotlin/text/CharDirectionality.$VALUES",
+                "Lkotlin/text/RegexOption.$VALUES",
+                "Ljava/lang/ThreadLocal.precisionFormats",
+                "Lkotlin/time/DurationUnit.$VALUES"
             ],
             "methods":[
                 "kotlin/jvm/internal/CallableReference_kotlin/reflect/KCallable.getAnnotations(()Ljava/util/List;)",
@@ -974,7 +1104,8 @@
                 "[Landroidx/profileinstaller/FileSectionType;"
             ],
             "fields":[
-
+                "Landroidx/profileinstaller/DexProfileData.mProfile",
+                "Landroidx/profileinstaller/FileSectionType.$VALUES"
             ],
             "methods":[
 
@@ -1013,7 +1144,34 @@
                 "androidx/compose/ui/R$style"
             ],
             "fields":[
-                "android/view/RenderNode.renderNode"
+                "Ljava/lang/Object.keys",
+                "Landroidx/compose/ui/autofill/AutofillType.$VALUES",
+                "Landroidx/compose/ui/focus/FocusStateImpl.$VALUES",
+                "Landroidx/compose/ui/input/pointer/PointerEventPass.$VALUES",
+                "Landroidx/compose/ui/input/pointer/PointerInteropFilter$DispatchToViewState.$VALUES",
+                "Ljava/lang/Object.$keys$inlined",
+                "Ljava/lang/Object.$keys",
+                "Landroidx/compose/ui/input/pointer/util/Vector.elements",
+                "Ljava/lang/Float.elements",
+                "Landroidx/compose/ui/input/pointer/util/PointAtTime.samples",
+                "Landroidx/compose/ui/layout/IntrinsicMinMax.$VALUES",
+                "Landroidx/compose/ui/layout/IntrinsicWidthHeight.$VALUES",
+                "Landroidx/compose/ui/layout/MeasuringIntrinsics$IntrinsicMinMax.$VALUES",
+                "Landroidx/compose/ui/layout/MeasuringIntrinsics$IntrinsicWidthHeight.$VALUES",
+                "Ljava/lang/Object.values",
+                "Landroidx/compose/ui/node/LayoutNode$LayoutState.$VALUES",
+                "Landroidx/compose/ui/node/LayoutNode$UsageByParent.$VALUES",
+                "Landroidx/compose/ui/node/NodeMeasuringIntrinsics$IntrinsicMinMax.$VALUES",
+                "Landroidx/compose/ui/node/NodeMeasuringIntrinsics$IntrinsicWidthHeight.$VALUES",
+                "Ljava/lang/Class.AcceptableClasses",
+                "android/view/RenderNode.renderNode",
+                "Landroidx/compose/ui/platform/TextToolbarStatus.$VALUES",
+                "Landroidx/compose/ui/platform/actionmodecallback/MenuItemOption.$VALUES",
+                "Landroidx/compose/ui/semantics/NodeLocationHolder$ComparisonStrategy.$VALUES",
+                "Lkotlin/reflect/KProperty.$$delegatedProperties",
+                "Landroidx/compose/ui/state/ToggleableState.$VALUES",
+                "Landroidx/compose/ui/text/input/TextInputServiceAndroid$TextInputCommand.$VALUES",
+                "Landroidx/compose/ui/window/SecureFlagPolicy.$VALUES"
             ],
             "methods":[
                 "androidx/compose/ui/Modifier$Element_androidx/compose/ui/Modifier$Element.then((Landroidx/compose/ui/Modifier;)Landroidx/compose/ui/Modifier;)",
@@ -1272,7 +1430,12 @@
                 "[Ljava/lang/Object;"
             ],
             "fields":[
-
+                "Landroidx/compose/ui/text/AnnotationType.$VALUES",
+                "Landroidx/compose/ui/text/android/style/LineHeightStyleSpan.lineHeightSpans",
+                "Landroidx/compose/ui/text/android/animation/SegmentType.$VALUES",
+                "Ljava/lang/Object.EMPTY_OBJECTS",
+                "Ljava/lang/Object.keyValues",
+                "Landroidx/compose/ui/text/style/ResolvedTextDirection.$VALUES"
             ],
             "methods":[
                 "androidx/compose/ui/text/AndroidParagraph_androidKt_android/text/Spannable.length(()I)",
@@ -1295,7 +1458,7 @@
 
             ],
             "fields":[
-
+                "Landroidx/compose/ui/graphics/colorspace/ColorSpace.ColorSpacesArray"
             ],
             "methods":[
                 "androidx/compose/ui/graphics/drawscope/CanvasDrawScope_androidx/compose/ui/graphics/drawscope/CanvasDrawScope.getSize-NH-jbRc(()J)",
@@ -1351,7 +1514,15 @@
                 "[Ljava/lang/Object;"
             ],
             "fields":[
-
+                "Landroidx/compose/foundation/MutatePriority.$VALUES",
+                "Landroidx/compose/foundation/gestures/Orientation.$VALUES",
+                "Ljava/lang/Object.$items",
+                "Landroidx/compose/foundation/lazy/grid/LazyMeasuredItem.items",
+                "Landroidx/compose/foundation/text/Handle.$VALUES",
+                "Landroidx/compose/foundation/text/HandleState.$VALUES",
+                "Landroidx/compose/foundation/text/KeyCommand.$VALUES",
+                "Landroidx/compose/foundation/text/selection/HandleReferencePoint.$VALUES",
+                "Landroidx/compose/foundation/text/selection/SelectionMode.$VALUES"
             ],
             "methods":[
                 "androidx/compose/foundation/AndroidEdgeEffectOverscrollEffect_androidx/compose/ui/graphics/drawscope/DrawScope.toPx-0680j_4((F)F)",
@@ -1460,7 +1631,21 @@
                 "androidx/compose/ui/R$id"
             ],
             "fields":[
-
+                "Landroidx/compose/material/BackdropLayers.$VALUES",
+                "Landroidx/compose/material/BackdropValue.$VALUES",
+                "Landroidx/compose/material/BottomDrawerValue.$VALUES",
+                "Landroidx/compose/material/BottomSheetValue.$VALUES",
+                "Landroidx/compose/material/DismissDirection.$VALUES",
+                "Landroidx/compose/material/DismissValue.$VALUES",
+                "Landroidx/compose/material/DrawerValue.$VALUES",
+                "Landroidx/compose/material/InputPhase.$VALUES",
+                "Ljava/lang/Integer.$y",
+                "Landroidx/compose/material/ModalBottomSheetValue.$VALUES",
+                "Landroidx/compose/material/ScaffoldLayoutContent.$VALUES",
+                "Landroidx/compose/material/SnackbarDuration.$VALUES",
+                "Landroidx/compose/material/SnackbarResult.$VALUES",
+                "Landroidx/compose/material/TabSlots.$VALUES",
+                "Landroidx/compose/material/TextFieldType.$VALUES"
             ],
             "methods":[
                 "androidx/compose/material/AlertDialogKt$AlertDialogBaselineLayout$2_androidx/compose/ui/layout/Placeable.get((Landroidx/compose/ui/layout/AlignmentLine;)I)",
@@ -1547,7 +1732,9 @@
                 "[Ljava/lang/Object;"
             ],
             "fields":[
-
+                "Landroidx/compose/animation/core/AnimationEndReason.$VALUES",
+                "Landroidx/compose/animation/core/MutatePriority.$VALUES",
+                "Landroidx/compose/animation/core/RepeatMode.$VALUES"
             ],
             "methods":[
                 "androidx/compose/animation/core/AnimateAsStateKt$animateValueAsState$2_kotlinx/coroutines/channels/Channel.trySend-JP2dKIU((Ljava/lang/Object;)Ljava/lang/Object;)",

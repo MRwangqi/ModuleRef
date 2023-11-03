@@ -79,14 +79,20 @@ object AnalysisModule {
     private fun analysisField(clazz: Clazz, clazzMap: Map<String, Clazz>) {
         // 检查字段是否有引用外部模块情况(基础类型需要忽略)
         clazz.fields?.forEach {
-            val clzName = getClassName(it.desc)
+            var clzName = getClassName(it.desc)
             if (clzName != null) {
+
+                // 可能会是数组类型，需要去掉 [
+                if (clzName.startsWith("[")) {
+                    clzName = clzName.substring(clzName.lastIndexOf("[") + 1, clzName.length)
+                }
+
                 if (clazzMap.contains(clzName)) {
                     // 记录当前类引用与注解的关系
                     depRefRecord(clazz, clazzMap[clzName]!!)
                 } else {
                     // 没找到该字段
-                    unsolvedFieldRecord(clazz, clzName + "." + it.name)
+                    unsolvedFieldRecord(clazz, "${clazz.className}_" + clzName + "." + it.name)
                 }
             }
         }
@@ -232,9 +238,16 @@ object AnalysisModule {
     }
 
     private fun getClassName(desc: String): String? {
-        // Ljava/util/ArrayList;
+        // Ljava/util/ArrayList;  对象
         if (desc.startsWith("L")) {
             return desc.substring(1, desc.length - 1)
+        }
+        // [java/util/ArrayList;  数组对象，也有可能是 [[java/util/ArrayList;
+        if (desc.startsWith("[")) {
+            val obj = desc.substring(desc.lastIndexOf("[") + 1, desc.length)
+            if (obj.startsWith("L")) {
+                return desc.substring(1, desc.length - 1)
+            }
         }
         // 基础类型不关心，直接返回 null
         return null
