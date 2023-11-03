@@ -1,22 +1,15 @@
 package com.codelang.module
 
-import com.android.build.gradle.AppExtension
-import com.android.build.gradle.internal.publishing.AndroidArtifacts
-import com.codelang.module.bean.ModuleData
+import com.codelang.module.bean.AnalysisData
+import com.google.gson.Gson
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.objectweb.asm.ClassReader
 import java.io.File
-import java.io.FileInputStream
-import java.io.IOException
-import java.io.InputStream
-import java.util.Properties
-import java.util.jar.JarFile
 
 class ModuleRefPlugin : Plugin<Project> {
 
     companion object {
-        const val TASK_NAME = "moduleRefPlugin"
+        const val TASK_NAME = "moduleRef"
         const val BUILD = "build"
     }
 
@@ -32,93 +25,34 @@ class ModuleRefPlugin : Plugin<Project> {
 //            "debug"
 //        }
 
-
         project.afterEvaluate {
-
+            // todo 暂时写死 debugRuntimeClasspath，后续需要根据 buildType 动态获取
             val configurationName = "debugRuntimeClasspath"
             project.tasks.create(TASK_NAME) {
                 it.doLast {
-                    val list = arrayListOf<ModuleData>()
-                    // 收集 class file
-                    collectAndroidModule(project)?.also { list.add(it) }
-                    list.addAll(collectDepModule(project, configurationName))
-
-                    // todo test
-//                    list.get(0).classReaders.get(2)
-//                        .accept(ModuleClassNode(), ClassReader.SKIP_DEBUG)
+                    // 收集依赖里的所有 class 文件
+                    val collect = CollectModule.collectClazz(project, configurationName)
+                    // 分析 class 文件的引用情况
+                    val analysisMap = AnalysisModule.analysis(collect)
+                    // 生成文件
+                    generatorFile(project, analysisMap)
+                    // todo collectManifest 清单文件中对自定义 View 的引用分析
                 }
             }
         }
     }
 
 
-    private fun collectDepModule(project: Project, configurationName: String): List<ModuleData> {
-        val resolvableDeps =
-            project.configurations.getByName(configurationName).incoming
-        // 获取 dependencies class.jar
-        return resolvableDeps.artifactView { conf ->
-            conf.attributes { attr ->
-                attr.attribute(
-                    AndroidArtifacts.ARTIFACT_TYPE,
-                    AndroidArtifacts.ArtifactType.CLASSES_JAR.type
-                )
-            }
-        }.artifacts.map { result ->
-            val dep = result.variant.displayName.split(" ").find { it.contains(":") }
-                ?: result.variant.displayName
-            ModuleData(dep, result.file, unzipJar(result.file))
-        }.toList()
-    }
-
-    private fun collectAndroidModule(project: Project): ModuleData? {
-        // 获取 android.jar
-        val android = project.extensions.findByName("android") as? AppExtension
-            ?: throw RuntimeException("This is not android project")
-        val sdk = android.compileSdkVersion
-            ?: throw RuntimeException("compileSdkVersion not set")
-
-        val propFile = File(project.rootProject.projectDir, "local.properties")
-        val p = Properties()
-        p.load(FileInputStream(propFile))
-        var path = p["sdk.dir"]
-        path = path ?: System.getenv("ANDROID_HOME")
-        val androidJar = File(
-            path.toString(),
-            "platforms${File.separator}${sdk}${File.separator}android.jar"
-        )
-        if (androidJar.exists()) {
-            return ModuleData("android", androidJar, unzipJar(androidJar))
+    private fun generatorFile(project: Project, analysisMap: Map<String, AnalysisData>) {
+        // 生成文件
+        val text = Gson().toJson(analysisMap)
+        if (!project.buildDir.exists()) {
+            project.buildDir.mkdir()
         }
-        return null
-    }
+        val outputFile = File(project.buildDir.absolutePath + File.separator + "moduleRef.json")
+        outputFile.writeText(text)
 
-
-    private fun unzipJar(file: File): List<ClassReader> {
-        // 获取 jar 中的 class 文件
-        val jarFile = JarFile(file, false, JarFile.OPEN_READ)
-        val jarEntries = jarFile.entries()
-        val list = arrayListOf<ClassReader>()
-        while (jarEntries.hasMoreElements()) {
-            val entry = jarEntries.nextElement()
-            if (!entry.isDirectory && entry.name.endsWith(".class") && !entry.name.endsWith("module-info.class")) {
-                var ins: InputStream? = null
-                try {
-                    ins = jarFile.getInputStream(entry)
-                    list.add(ClassReader(ins))
-                } catch (e: Exception) {
-                    e.printStackTrace()
-                } finally {
-                    if (ins != null) {
-                        try {
-                            ins.close()
-                        } catch (e: IOException) {
-                            e.printStackTrace()
-                        }
-                    }
-                }
-            }
-        }
-        return list
+        println("配置文件生成----> " + outputFile.absolutePath)
     }
 
 }
