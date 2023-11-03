@@ -14,7 +14,7 @@ object AnalysisModule {
      */
     private val analysisMap = hashMapOf<String, AnalysisData>()
 
-    fun analysis(collect:Collect): Map<String, AnalysisData> {
+    fun analysis(collect: Collect): Map<String, AnalysisData> {
         // 将 list 转成 map,方便后续查找 class
         val clazzMap = hashMapOf<String, Clazz>()
 
@@ -124,7 +124,7 @@ object AnalysisModule {
                         } else {
                             unsolvedMethodRecord(
                                 clazz,
-                                "${clazz.className}->${node.owner}.${node.name}(${node.desc})"
+                                "${clazz.className}_${node.owner}.${node.name}(${node.desc})"
                             )
                         }
                     } else {
@@ -159,7 +159,7 @@ object AnalysisModule {
                         } else {
                             unsolvedMethodRecord(
                                 clazz,
-                                "${clazz.className}->${node.owner}.${node.name}(${node.desc})"
+                                "${clazz.className}_${node.owner}.${node.name}(${node.desc})"
                             )
 //                            println("FieldInsnNode unsolved class ${node.owner} method= " + node.name + " desc=" + node.desc)
                         }
@@ -172,15 +172,24 @@ object AnalysisModule {
 
 
     private fun depRefRecord(clazz: Clazz, refClazz: Clazz) {
+        val refDep = refClazz.moduleData?.dep!!
+
+        // 处于黑名单的依赖不记录
+        if (Constants.blackList.contains(refDep)) {
+            return
+        }
+
         // 不同依赖模块需要记录
-        if (clazz.moduleData?.dep != refClazz.moduleData?.dep) {
+        if (clazz.moduleData?.dep != refDep) {
             var analysisData = analysisMap.get(clazz.moduleData?.dep)
             if (analysisData == null) {
                 analysisData = AnalysisData()
                 analysisMap[clazz.moduleData?.dep!!] = analysisData
             }
             // 记录 dep 引用关系
-            analysisData.dependencies.add(refClazz.moduleData?.dep!!)
+            if (!analysisData.dependencies.contains(refDep)) {
+                analysisData.dependencies.add(refDep)
+            }
         }
     }
 
@@ -189,6 +198,10 @@ object AnalysisModule {
         if (analysisData == null) {
             analysisData = AnalysisData()
             analysisMap[clazz.moduleData?.dep!!] = analysisData
+        }
+
+        if (analysisData.unsolved.clazz.contains(clazzError)) {
+            return
         }
         analysisData.unsolved.clazz.add(clazzError)
     }
@@ -199,6 +212,10 @@ object AnalysisModule {
             analysisData = AnalysisData()
             analysisMap[clazz.moduleData?.dep!!] = analysisData
         }
+        if (analysisData.unsolved.fields.contains(filedError)) {
+            return
+        }
+
         analysisData.unsolved.fields.add(filedError)
     }
 
@@ -207,6 +224,9 @@ object AnalysisModule {
         if (analysisData == null) {
             analysisData = AnalysisData()
             analysisMap[clazz.moduleData?.dep!!] = analysisData
+        }
+        if (analysisData.unsolved.methods.contains(methodError)) {
+            return
         }
         analysisData.unsolved.methods.add(methodError)
     }

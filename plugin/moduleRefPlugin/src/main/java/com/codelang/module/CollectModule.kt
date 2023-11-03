@@ -19,6 +19,7 @@ import java.util.jar.JarFile
 object CollectModule {
 
 
+
     /**
      * 收集 clazz，aList 为需要参与指令分析的 clazz，nList 为不需要参与指令分析的 clazz
      * @return
@@ -99,7 +100,7 @@ object CollectModule {
             "platforms${File.separator}${sdk}${File.separator}android.jar"
         )
         if (androidJar.exists()) {
-            return ModuleData("android", androidJar, unzipJar(androidJar))
+            return ModuleData(Constants.ANDROID_DEP, androidJar, unzipJar(androidJar))
         }
         return null
     }
