@@ -2,7 +2,7 @@ package com.codelang.module.bean
 
 class AnalysisData {
     val dependencies = arrayListOf<String>()
-    val unsolved = UnsolvedData()
+    var unsolved:UnsolvedData? = null
 }
 
 

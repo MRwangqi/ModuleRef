@@ -3,6 +3,7 @@ package com.codelang.module
 import com.codelang.module.bean.AnalysisData
 import com.codelang.module.bean.Clazz
 import com.codelang.module.bean.Collect
+import com.codelang.module.bean.UnsolvedData
 import org.objectweb.asm.tree.FieldInsnNode
 import org.objectweb.asm.tree.MethodInsnNode
 
@@ -79,20 +80,14 @@ object AnalysisModule {
     private fun analysisField(clazz: Clazz, clazzMap: Map<String, Clazz>) {
         // 检查字段是否有引用外部模块情况(基础类型需要忽略)
         clazz.fields?.forEach {
-            var clzName = getClassName(it.desc)
+            val clzName = getClassName(it.desc)
             if (clzName != null) {
-
-                // 可能会是数组类型，需要去掉 [
-                if (clzName.startsWith("[")) {
-                    clzName = clzName.substring(clzName.lastIndexOf("[") + 1, clzName.length)
-                }
-
                 if (clazzMap.contains(clzName)) {
                     // 记录当前类引用与注解的关系
                     depRefRecord(clazz, clazzMap[clzName]!!)
                 } else {
                     // 没找到该字段
-                    unsolvedFieldRecord(clazz, "${clazz.className}_" + clzName + "." + it.name)
+                    unsolvedFieldRecord(clazz, "${clazz.className}_" + clzName)
                 }
             }
         }
@@ -103,10 +98,14 @@ object AnalysisModule {
         clazz.methods?.forEach {
             it.instructions
                 .filterIsInstance(MethodInsnNode::class.java)
-                .forEach { node ->
-                    if (clazzMap.contains(node.owner)) {
+                .forEach Continue@{ node ->
+                    val ownerName = getClassName(node.owner)
+                    if (ownerName == null) {
+                        return@Continue
+                    }
+                    if (clazzMap.contains(ownerName)) {
                         var isFound = false
-                        var clzName = node.owner
+                        var clzName = ownerName
                         while (clzName != null) {
                             val clz = clazzMap[clzName] // 可能为 null，因为会存在父类也找不到的情况
                             if (clz == null) {
@@ -130,29 +129,33 @@ object AnalysisModule {
                         } else {
                             unsolvedMethodRecord(
                                 clazz,
-                                "${clazz.className}_${node.owner}.${node.name}(${node.desc})"
+                                "${clazz.className}_${ownerName}.${node.name}(${node.desc})"
                             )
                         }
                     } else {
-                        unsolvedClazzRecord(clazz, node.owner)
+                        unsolvedClazzRecord(clazz, ownerName)
                     }
                 }
             it.instructions
                 .filterIsInstance(FieldInsnNode::class.java)
-                .forEach { node ->
-                    if (clazzMap.contains(node.owner)) {
+                .forEach Continue@{ node ->
+                    val ownerName = getClassName(node.owner)
+                    if (ownerName == null) {
+                        return@Continue
+                    }
+                    if (clazzMap.contains(ownerName)) {
                         var isFound = false
-                        var clzName = node.owner
+                        var clzName = ownerName
                         while (clzName != null) {
                             val clz = clazzMap[clzName]  // 可能为 null，因为会存在父类也不存在的情况
                             if (clz == null) {
-                                unsolvedClazzRecord(clazz, clzName)
+                                unsolvedClazzRecord(clazz, clzName ?: "")
                             }
                             //  遍历 clz 的 method 是否能匹配上
                             val f =
                                 clz?.fields?.firstOrNull { it.name == node.name && it.desc == node.desc }
                             if (f == null) {
-                                // 如果找不到，尝试从父类上面找，直到父类也找不带该方法
+                                // 如果找不到，尝试从父类上面找，直到父类也找不到该方法
                                 clzName = clz?.superName
                             } else {
                                 isFound = true
@@ -165,12 +168,11 @@ object AnalysisModule {
                         } else {
                             unsolvedMethodRecord(
                                 clazz,
-                                "${clazz.className}_${node.owner}.${node.name}(${node.desc})"
+                                "${clazz.className}_${ownerName}.${node.name}(${node.desc})"
                             )
-//                            println("FieldInsnNode unsolved class ${node.owner} method= " + node.name + " desc=" + node.desc)
                         }
                     } else {
-                        unsolvedClazzRecord(clazz, node.owner)
+                        unsolvedClazzRecord(clazz, ownerName)
                     }
                 }
         }
@@ -206,10 +208,13 @@ object AnalysisModule {
             analysisMap[clazz.moduleData?.dep!!] = analysisData
         }
 
-        if (analysisData.unsolved.clazz.contains(clazzError)) {
+        if (analysisData.unsolved == null) {
+            analysisData.unsolved = UnsolvedData()
+        }
+        if (analysisData.unsolved!!.clazz.contains(clazzError)) {
             return
         }
-        analysisData.unsolved.clazz.add(clazzError)
+        analysisData.unsolved!!.clazz.add(clazzError)
     }
 
     private fun unsolvedFieldRecord(clazz: Clazz, filedError: String) {
@@ -218,11 +223,14 @@ object AnalysisModule {
             analysisData = AnalysisData()
             analysisMap[clazz.moduleData?.dep!!] = analysisData
         }
-        if (analysisData.unsolved.fields.contains(filedError)) {
+        if (analysisData.unsolved == null) {
+            analysisData.unsolved = UnsolvedData()
+        }
+        if (analysisData.unsolved!!.fields.contains(filedError)) {
             return
         }
 
-        analysisData.unsolved.fields.add(filedError)
+        analysisData.unsolved!!.fields.add(filedError)
     }
 
     private fun unsolvedMethodRecord(clazz: Clazz, methodError: String) {
@@ -231,24 +239,27 @@ object AnalysisModule {
             analysisData = AnalysisData()
             analysisMap[clazz.moduleData?.dep!!] = analysisData
         }
-        if (analysisData.unsolved.methods.contains(methodError)) {
+        if (analysisData.unsolved == null) {
+            analysisData.unsolved = UnsolvedData()
+        }
+        if (analysisData.unsolved!!.methods.contains(methodError)) {
             return
         }
-        analysisData.unsolved.methods.add(methodError)
+        analysisData.unsolved!!.methods.add(methodError)
     }
 
     private fun getClassName(desc: String): String? {
-        // Ljava/util/ArrayList;  对象
-        if (desc.startsWith("L")) {
-            return desc.substring(1, desc.length - 1)
-        }
+
+        var clazzName = desc
         // [java/util/ArrayList;  数组对象，也有可能是 [[java/util/ArrayList;
-        if (desc.startsWith("[")) {
-            val obj = desc.substring(desc.lastIndexOf("[") + 1, desc.length)
-            if (obj.startsWith("L")) {
-                return desc.substring(1, desc.length - 1)
-            }
+        if (clazzName.startsWith("[")) {
+            clazzName = clazzName.substring(clazzName.lastIndexOf("[") + 1, clazzName.length)
         }
+        // Ljava/util/ArrayList;  对象
+        if (clazzName.startsWith("L")) {
+            return clazzName.substring(1, clazzName.length - 1)
+        }
+
         // 基础类型不关心，直接返回 null
         return null
     }
