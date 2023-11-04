@@ -1,10 +1,21 @@
 package com.codelang.module
 
 import com.codelang.module.bean.AnalysisData
+import com.codelang.module.bean.Clazz
 import com.google.gson.Gson
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.tasks.compile.JavaCompile
+import org.jetbrains.kotlin.gradle.utils.named
+import org.objectweb.asm.ClassReader
+import java.io.BufferedReader
 import java.io.File
+import java.io.IOException
+import java.io.InputStreamReader
+import java.net.URL
+import java.util.jar.JarFile
+import java.util.jar.JarInputStream
+
 
 class ModuleRefPlugin : Plugin<Project> {
 

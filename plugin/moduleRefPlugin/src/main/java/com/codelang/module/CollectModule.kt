@@ -2,6 +2,7 @@ package com.codelang.module
 
 import com.android.build.gradle.AppExtension
 import com.android.build.gradle.internal.publishing.AndroidArtifacts
+import com.android.builder.dexing.isJarFile
 import com.codelang.module.bean.Clazz
 import com.codelang.module.bean.Collect
 import com.codelang.module.bean.ModuleData
@@ -13,11 +14,12 @@ import java.io.File
 import java.io.FileInputStream
 import java.io.IOException
 import java.io.InputStream
+import java.net.URL
 import java.util.Properties
 import java.util.jar.JarFile
+import java.util.jar.JarInputStream
 
 object CollectModule {
-
 
 
     /**
@@ -43,7 +45,13 @@ object CollectModule {
      */
     private fun getNoneAnalysisClazz(project: Project): List<Clazz> {
         val depList = arrayListOf<ModuleData>()
+        // android.jar
         collectAndroidModule(project)?.also { depList.add(it) }
+        // java rt.jar
+        collectJavaModule(project).also {
+            depList.add(ModuleData(Constants.JAVA_DEP, File(""), it))
+        }
+
         return parseClazz(depList)
     }
 
@@ -105,6 +113,30 @@ object CollectModule {
         return null
     }
 
+    private fun collectJavaModule(project: Project): List<ClassReader> {
+        val list = arrayListOf<ClassReader>()
+        val file = "/META-INF/jdk8_rt.jar"
+        val fileURL: URL? = this.javaClass.getResource(file)
+        if (fileURL != null) {
+            try {
+                val ins = this.javaClass.getResourceAsStream(file)
+                JarInputStream(ins).use { jarInputStream ->
+                    while (true) {
+                        val jarEntry = jarInputStream.nextJarEntry ?: break
+                        if (jarEntry.name.endsWith(".class")) {
+                            val classData = jarInputStream.readBytes()
+                            // 使用 ASM 的 ClassReader 解析 class 文件
+                            val classReader = ClassReader(classData)
+                            list.add(classReader)
+                        }
+                    }
+                }
+            } catch (e: IOException) {
+                e.printStackTrace()
+            }
+        }
+        return list
+    }
 
     private fun unzipJar(file: File): List<ClassReader> {
         // 获取 jar 中的 class 文件
