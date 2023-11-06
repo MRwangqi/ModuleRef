@@ -1,7 +1,9 @@
 package com.codelang.module
 
+import com.android.build.gradle.internal.publishing.AndroidArtifacts
 import com.codelang.module.bean.AnalysisData
 import com.codelang.module.bean.Clazz
+import com.codelang.module.bean.ModuleData
 import com.google.gson.Gson
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -36,6 +38,7 @@ class ModuleRefPlugin : Plugin<Project> {
 //            "debug"
 //        }
 
+
         project.afterEvaluate {
             // todo 暂时写死 debugRuntimeClasspath，后续需要根据 buildType 动态获取
             val configurationName = "debugRuntimeClasspath"
@@ -47,7 +50,7 @@ class ModuleRefPlugin : Plugin<Project> {
                     val analysisMap = AnalysisModule.analysis(collect)
                     // 生成文件
                     generatorFile(project, analysisMap)
-                    // todo collectManifest 清单文件中对自定义 View 的引用分析
+                    // todo collect layout 中自定义 View 的引用分析
                 }
             }
         }

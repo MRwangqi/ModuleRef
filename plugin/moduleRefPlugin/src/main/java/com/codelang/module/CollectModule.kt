@@ -2,7 +2,6 @@ package com.codelang.module
 
 import com.android.build.gradle.AppExtension
 import com.android.build.gradle.internal.publishing.AndroidArtifacts
-import com.android.builder.dexing.isJarFile
 import com.codelang.module.bean.Clazz
 import com.codelang.module.bean.Collect
 import com.codelang.module.bean.ModuleData
@@ -36,8 +35,13 @@ object CollectModule {
      * 获取需要参与指令解析的 clazz
      */
     private fun getAnalysisClazz(project: Project, configurationName: String): List<Clazz> {
-        val datas = collectDepModule(project, configurationName)
-        return parseClazz(datas)
+        val jarData = collectDepJarModule(project, configurationName)
+        val layoutData = collectDepLayoutModule(project,configurationName)
+
+        val list = arrayListOf<ModuleData>()
+        list.addAll(jarData)
+        list.addAll(layoutData)
+        return parseClazz(list)
     }
 
     /**
@@ -49,7 +53,7 @@ object CollectModule {
         collectAndroidModule(project)?.also { depList.add(it) }
         // java rt.jar
         collectJavaModule(project).also {
-            depList.add(ModuleData(Constants.JAVA_DEP, File(""), it))
+            depList.add(ModuleData(Constants.JAVA_DEP, it))
         }
 
         return parseClazz(depList)
@@ -68,9 +72,9 @@ object CollectModule {
 
 
     /**
-     * 收集依赖 module
+     * 收集依赖 jar module
      */
-    private fun collectDepModule(project: Project, configurationName: String): List<ModuleData> {
+    private fun collectDepJarModule(project: Project, configurationName: String): List<ModuleData> {
         val resolvableDeps =
             project.configurations.getByName(configurationName).incoming
         // 获取 dependencies class.jar
@@ -84,9 +88,41 @@ object CollectModule {
         }.artifacts.map { result ->
             val dep = result.variant.displayName.split(" ").find { it.contains(":") }
                 ?: result.variant.displayName
-            ModuleData(dep, result.file, unzipJar(result.file))
+            ModuleData(dep, unzipJar(result.file))
         }.toList()
     }
+
+    private fun collectDepLayoutModule(
+        project: Project,
+        configurationName: String
+    ): List<ModuleData> {
+        val resolvableDeps =
+            project.configurations.getByName(configurationName).incoming
+        // 获取 dependencies layout
+        return resolvableDeps.artifactView { conf ->
+            conf.attributes { attr ->
+                attr.attribute(
+                    AndroidArtifacts.ARTIFACT_TYPE,
+                    AndroidArtifacts.ArtifactType.ANDROID_RES.type
+                )
+            }
+        }.artifacts.map { result ->
+            val dep = result.variant.displayName.split(" ").find { it.contains(":") }
+                ?: result.variant.displayName
+            val layout = result.file.absolutePath + File.separator + "layout"
+
+            val file = File(layout)
+            return if (file.exists()) {
+                file.listFiles()?.map {
+                    // todo 解析 xml 节点
+                }
+                emptyList() // todo 占位
+            } else {
+                emptyList()
+            }
+        }.toList()
+    }
+
 
     /**
      * 收集 Android module
@@ -108,7 +144,7 @@ object CollectModule {
             "platforms${File.separator}${sdk}${File.separator}android.jar"
         )
         if (androidJar.exists()) {
-            return ModuleData(Constants.ANDROID_DEP, androidJar, unzipJar(androidJar))
+            return ModuleData(Constants.ANDROID_DEP, unzipJar(androidJar))
         }
         return null
     }
