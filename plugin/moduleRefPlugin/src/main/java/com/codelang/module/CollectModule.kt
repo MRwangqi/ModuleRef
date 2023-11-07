@@ -17,6 +17,7 @@ import java.net.URL
 import java.util.Properties
 import java.util.jar.JarFile
 import java.util.jar.JarInputStream
+import javax.xml.parsers.SAXParserFactory
 
 object CollectModule {
 
@@ -112,11 +113,12 @@ object CollectModule {
             val layout = result.file.absolutePath + File.separator + "layout"
 
             val file = File(layout)
-            return if (file.exists()) {
-                file.listFiles()?.map {
-                    // todo 解析 xml 节点
+            return if (file.exists() && file.isDirectory) {
+                file.listFiles()?.filter { it.name.endsWith(".xml") }?.map { xml ->
+                    val handler = LayoutXmlHandler()
+                    SAXParserFactory.newInstance().newSAXParser().parse(xml, handler)
+                    handler.views
                 }
-                emptyList() // todo 占位
             } else {
                 emptyList()
             }
