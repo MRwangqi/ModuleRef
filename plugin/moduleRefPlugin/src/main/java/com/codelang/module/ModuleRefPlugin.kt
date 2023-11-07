@@ -1,22 +1,13 @@
 package com.codelang.module
 
-import com.android.build.gradle.internal.publishing.AndroidArtifacts
+import com.codelang.module.analysis.AnalysisModule
 import com.codelang.module.bean.AnalysisData
-import com.codelang.module.bean.Clazz
-import com.codelang.module.bean.ModuleData
+import com.codelang.module.collect.ClazzCollectModule
+import com.codelang.module.collect.XmlCollectModule
 import com.google.gson.Gson
 import org.gradle.api.Plugin
 import org.gradle.api.Project
-import org.gradle.api.tasks.compile.JavaCompile
-import org.jetbrains.kotlin.gradle.utils.named
-import org.objectweb.asm.ClassReader
-import java.io.BufferedReader
 import java.io.File
-import java.io.IOException
-import java.io.InputStreamReader
-import java.net.URL
-import java.util.jar.JarFile
-import java.util.jar.JarInputStream
 
 
 class ModuleRefPlugin : Plugin<Project> {
@@ -45,9 +36,12 @@ class ModuleRefPlugin : Plugin<Project> {
             project.tasks.create(TASK_NAME) {
                 it.doLast {
                     // 收集依赖里的所有 class 文件
-                    val collect = CollectModule.collectClazz(project, configurationName)
+                    val collect = ClazzCollectModule.collectClazz(project, configurationName)
+                    // 收集依赖里的所有 layout 文件
+                    val xmlCollectList =
+                        XmlCollectModule.collectDepLayoutModule(project, configurationName)
                     // 分析 class 文件的引用情况
-                    val analysisMap = AnalysisModule.analysis(collect)
+                    val analysisMap = AnalysisModule.analysis(collect,xmlCollectList)
                     // 生成文件
                     generatorFile(project, analysisMap)
                     // todo collect layout 中自定义 View 的引用分析

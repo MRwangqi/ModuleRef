@@ -1,7 +1,8 @@
-package com.codelang.module
+package com.codelang.module.collect
 
 import com.android.build.gradle.AppExtension
 import com.android.build.gradle.internal.publishing.AndroidArtifacts
+import com.codelang.module.Constants
 import com.codelang.module.bean.Clazz
 import com.codelang.module.bean.Collect
 import com.codelang.module.bean.ModuleData
@@ -17,9 +18,8 @@ import java.net.URL
 import java.util.Properties
 import java.util.jar.JarFile
 import java.util.jar.JarInputStream
-import javax.xml.parsers.SAXParserFactory
 
-object CollectModule {
+object ClazzCollectModule {
 
 
     /**
@@ -37,12 +37,7 @@ object CollectModule {
      */
     private fun getAnalysisClazz(project: Project, configurationName: String): List<Clazz> {
         val jarData = collectDepJarModule(project, configurationName)
-        val layoutData = collectDepLayoutModule(project,configurationName)
-
-        val list = arrayListOf<ModuleData>()
-        list.addAll(jarData)
-        list.addAll(layoutData)
-        return parseClazz(list)
+        return parseClazz(jarData)
     }
 
     /**
@@ -53,7 +48,7 @@ object CollectModule {
         // android.jar
         collectAndroidModule(project)?.also { depList.add(it) }
         // java rt.jar
-        collectJavaModule(project).also {
+        collectJavaModule().also {
             depList.add(ModuleData(Constants.JAVA_DEP, it))
         }
 
@@ -93,37 +88,7 @@ object CollectModule {
         }.toList()
     }
 
-    private fun collectDepLayoutModule(
-        project: Project,
-        configurationName: String
-    ): List<ModuleData> {
-        val resolvableDeps =
-            project.configurations.getByName(configurationName).incoming
-        // 获取 dependencies layout
-        return resolvableDeps.artifactView { conf ->
-            conf.attributes { attr ->
-                attr.attribute(
-                    AndroidArtifacts.ARTIFACT_TYPE,
-                    AndroidArtifacts.ArtifactType.ANDROID_RES.type
-                )
-            }
-        }.artifacts.map { result ->
-            val dep = result.variant.displayName.split(" ").find { it.contains(":") }
-                ?: result.variant.displayName
-            val layout = result.file.absolutePath + File.separator + "layout"
 
-            val file = File(layout)
-            return if (file.exists() && file.isDirectory) {
-                file.listFiles()?.filter { it.name.endsWith(".xml") }?.map { xml ->
-                    val handler = LayoutXmlHandler()
-                    SAXParserFactory.newInstance().newSAXParser().parse(xml, handler)
-                    handler.views
-                }
-            } else {
-                emptyList()
-            }
-        }.toList()
-    }
 
 
     /**
@@ -151,7 +116,7 @@ object CollectModule {
         return null
     }
 
-    private fun collectJavaModule(project: Project): List<ClassReader> {
+    private fun collectJavaModule(): List<ClassReader> {
         val list = arrayListOf<ClassReader>()
         val file = "/META-INF/jdk8_rt.jar"
         val fileURL: URL? = this.javaClass.getResource(file)

@@ -1,9 +1,11 @@
-package com.codelang.module
+package com.codelang.module.analysis
 
+import com.codelang.module.Constants
 import com.codelang.module.bean.AnalysisData
 import com.codelang.module.bean.Clazz
 import com.codelang.module.bean.Collect
 import com.codelang.module.bean.UnsolvedData
+import com.codelang.module.bean.XmlModuleData
 import org.objectweb.asm.tree.FieldInsnNode
 import org.objectweb.asm.tree.MethodInsnNode
 
@@ -15,7 +17,7 @@ object AnalysisModule {
      */
     private val analysisMap = hashMapOf<String, AnalysisData>()
 
-    fun analysis(collect: Collect): Map<String, AnalysisData> {
+    fun analysis(collect: Collect, xmlCollectList: List<XmlModuleData>): Map<String, AnalysisData> {
         // 将 list 转成 map,方便后续查找 class
         val clazzMap = hashMapOf<String, Clazz>()
 
@@ -35,6 +37,20 @@ object AnalysisModule {
             analysisField(it, clazzMap)
             analysisMethod(it, clazzMap)
         }
+
+        // 分析 xml 引用
+        xmlCollectList.forEach { data ->
+            val dep = data.dep
+            data.classes.forEach { clazz ->
+                println("xml clazz:$clazz dep:$dep")
+                if (clazzMap.contains(clazz)) {
+                    depRefRecord(clazzMap[clazz]!!, dep)
+                } else {
+                    unsolvedClazzRecord(clazzMap[dep]!!, clazz)
+                }
+            }
+        }
+
         return analysisMap
     }
 
@@ -181,6 +197,27 @@ object AnalysisModule {
 
     private fun depRefRecord(clazz: Clazz, refClazz: Clazz) {
         val refDep = refClazz.moduleData?.dep!!
+
+        // 处于黑名单的依赖不记录
+        if (Constants.blackList.contains(refDep)) {
+            return
+        }
+
+        // 不同依赖模块需要记录
+        if (clazz.moduleData?.dep != refDep) {
+            var analysisData = analysisMap.get(clazz.moduleData?.dep)
+            if (analysisData == null) {
+                analysisData = AnalysisData()
+                analysisMap[clazz.moduleData?.dep!!] = analysisData
+            }
+            // 记录 dep 引用关系
+            if (!analysisData.dependencies.contains(refDep)) {
+                analysisData.dependencies.add(refDep)
+            }
+        }
+    }
+
+    private fun depRefRecord(clazz: Clazz, refDep:String) {
 
         // 处于黑名单的依赖不记录
         if (Constants.blackList.contains(refDep)) {
