@@ -42,11 +42,10 @@ object AnalysisModule {
         xmlCollectList.forEach { data ->
             val dep = data.dep
             data.classes.forEach { clazz ->
-                println("xml clazz:$clazz dep:$dep")
                 if (clazzMap.contains(clazz)) {
                     depRefRecord(clazzMap[clazz]!!, dep)
                 } else {
-                    unsolvedClazzRecord(clazzMap[dep]!!, clazz)
+                    unsolvedClazzRecord(dep, clazz)
                 }
             }
         }
@@ -62,9 +61,9 @@ object AnalysisModule {
         if (clazz.superName != null) {
             if (clazzMap.contains(clazz.superName)) {
                 // 记录当前类引用与父类的关系
-                depRefRecord(clazz, clazzMap[clazz.superName]!!)
+                depRefRecord(clazz, clazzMap[clazz.superName]!!.moduleData!!.dep)
             } else {
-                unsolvedClazzRecord(clazz, clazz.superName!!)
+                unsolvedClazzRecord(clazz.moduleData!!.dep, clazz.superName!!)
             }
         }
 
@@ -73,9 +72,9 @@ object AnalysisModule {
         clazz.interfaces?.forEach {
             if (clazzMap.contains(it)) {
                 // 记录当前类引用与接口的关系
-                depRefRecord(clazz, clazzMap[it]!!)
+                depRefRecord(clazz, clazzMap[it]!!.moduleData!!.dep)
             } else {
-                unsolvedClazzRecord(clazz, it)
+                unsolvedClazzRecord(clazz.moduleData!!.dep, it)
             }
         }
 
@@ -85,9 +84,9 @@ object AnalysisModule {
             if (clzName != null) {
                 if (clazzMap.contains(clzName)) {
                     // 记录当前类引用与注解的关系
-                    depRefRecord(clazz, clazzMap[clzName]!!)
+                    depRefRecord(clazz, clazzMap[clzName]!!.moduleData!!.dep)
                 } else {
-                    unsolvedClazzRecord(clazz, clzName)
+                    unsolvedClazzRecord(clazz.moduleData!!.dep, clzName)
                 }
             }
         }
@@ -100,7 +99,7 @@ object AnalysisModule {
             if (clzName != null) {
                 if (clazzMap.contains(clzName)) {
                     // 记录当前类引用与注解的关系
-                    depRefRecord(clazz, clazzMap[clzName]!!)
+                    depRefRecord(clazz, clazzMap[clzName]!!.moduleData!!.dep)
                 } else {
                     // 没找到该字段
                     unsolvedFieldRecord(clazz, "${clazz.className}_" + clzName)
@@ -125,7 +124,7 @@ object AnalysisModule {
                         while (clzName != null) {
                             val clz = clazzMap[clzName] // 可能为 null，因为会存在父类也找不到的情况
                             if (clz == null) {
-                                unsolvedClazzRecord(clazz, clzName)
+                                unsolvedClazzRecord(clazz.moduleData!!.dep, clzName)
                             }
                             //  遍历 clz 的 method 是否能匹配上
                             val m =
@@ -141,7 +140,7 @@ object AnalysisModule {
 
                         if (isFound) {
                             // 记录当前类引用与方法的关系 clzName 与 clazz 的关系
-                            depRefRecord(clazz, clazzMap[clzName]!!)
+                            depRefRecord(clazz, clazzMap[clzName]!!.moduleData!!.dep)
                         } else {
                             unsolvedMethodRecord(
                                 clazz,
@@ -149,7 +148,7 @@ object AnalysisModule {
                             )
                         }
                     } else {
-                        unsolvedClazzRecord(clazz, ownerName)
+                        unsolvedClazzRecord(clazz.moduleData!!.dep, ownerName)
                     }
                 }
             it.instructions
@@ -165,7 +164,7 @@ object AnalysisModule {
                         while (clzName != null) {
                             val clz = clazzMap[clzName]  // 可能为 null，因为会存在父类也不存在的情况
                             if (clz == null) {
-                                unsolvedClazzRecord(clazz, clzName ?: "")
+                                unsolvedClazzRecord(clazz.moduleData!!.dep, clzName ?: "")
                             }
                             //  遍历 clz 的 method 是否能匹配上
                             val f =
@@ -180,7 +179,7 @@ object AnalysisModule {
                         }
                         if (isFound) {
                             // 记录当前类引用与方法的关系 clzName 与 clazz 的关系
-                            depRefRecord(clazz, clazzMap[clzName]!!)
+                            depRefRecord(clazz, clazzMap[clzName]!!.moduleData!!.dep)
                         } else {
                             unsolvedMethodRecord(
                                 clazz,
@@ -188,37 +187,13 @@ object AnalysisModule {
                             )
                         }
                     } else {
-                        unsolvedClazzRecord(clazz, ownerName)
+                        unsolvedClazzRecord(clazz.moduleData!!.dep, ownerName)
                     }
                 }
         }
     }
 
-
-    private fun depRefRecord(clazz: Clazz, refClazz: Clazz) {
-        val refDep = refClazz.moduleData?.dep!!
-
-        // 处于黑名单的依赖不记录
-        if (Constants.blackList.contains(refDep)) {
-            return
-        }
-
-        // 不同依赖模块需要记录
-        if (clazz.moduleData?.dep != refDep) {
-            var analysisData = analysisMap.get(clazz.moduleData?.dep)
-            if (analysisData == null) {
-                analysisData = AnalysisData()
-                analysisMap[clazz.moduleData?.dep!!] = analysisData
-            }
-            // 记录 dep 引用关系
-            if (!analysisData.dependencies.contains(refDep)) {
-                analysisData.dependencies.add(refDep)
-            }
-        }
-    }
-
     private fun depRefRecord(clazz: Clazz, refDep:String) {
-
         // 处于黑名单的依赖不记录
         if (Constants.blackList.contains(refDep)) {
             return
@@ -238,11 +213,11 @@ object AnalysisModule {
         }
     }
 
-    private fun unsolvedClazzRecord(clazz: Clazz, clazzError: String) {
-        var analysisData = analysisMap[clazz.moduleData?.dep]
+    private fun unsolvedClazzRecord(dep: String, clazzError: String) {
+        var analysisData = analysisMap[dep]
         if (analysisData == null) {
             analysisData = AnalysisData()
-            analysisMap[clazz.moduleData?.dep!!] = analysisData
+            analysisMap[dep] = analysisData
         }
 
         if (analysisData.unsolved == null) {
@@ -251,7 +226,7 @@ object AnalysisModule {
         if (analysisData.unsolved!!.clazz.contains(clazzError)) {
             return
         }
-        analysisData.unsolved!!.clazz.add(clazzError)
+        analysisData.unsolved!!.clazz.add(clazzError.replace("/", "."))
     }
 
     private fun unsolvedFieldRecord(clazz: Clazz, filedError: String) {
@@ -267,7 +242,7 @@ object AnalysisModule {
             return
         }
 
-        analysisData.unsolved!!.fields.add(filedError)
+        analysisData.unsolved!!.fields.add(filedError.replace("/", "."))
     }
 
     private fun unsolvedMethodRecord(clazz: Clazz, methodError: String) {
@@ -282,7 +257,7 @@ object AnalysisModule {
         if (analysisData.unsolved!!.methods.contains(methodError)) {
             return
         }
-        analysisData.unsolved!!.methods.add(methodError)
+        analysisData.unsolved!!.methods.add(methodError.replace("/", "."))
     }
 
     private fun getClassName(desc: String): String? {

@@ -1,5 +1,6 @@
 package com.codelang.module
 
+import com.android.build.gradle.internal.publishing.AndroidArtifacts
 import com.codelang.module.analysis.AnalysisModule
 import com.codelang.module.bean.AnalysisData
 import com.codelang.module.collect.ClazzCollectModule
@@ -35,16 +36,18 @@ class ModuleRefPlugin : Plugin<Project> {
             val configurationName = "debugRuntimeClasspath"
             project.tasks.create(TASK_NAME) {
                 it.doLast {
+                    val resolvableDeps =
+                        project.configurations.getByName(configurationName).incoming
+
                     // 收集依赖里的所有 class 文件
-                    val collect = ClazzCollectModule.collectClazz(project, configurationName)
+                    val collect = ClazzCollectModule.collectClazz(project, resolvableDeps)
                     // 收集依赖里的所有 layout 文件
                     val xmlCollectList =
-                        XmlCollectModule.collectDepLayoutModule(project, configurationName)
-                    // 分析 class 文件的引用情况
-                    val analysisMap = AnalysisModule.analysis(collect,xmlCollectList)
+                        XmlCollectModule.collectDepLayoutModule(project, resolvableDeps)
+                    // 分析 class、xml 文件的引用情况
+                    val analysisMap = AnalysisModule.analysis(collect, xmlCollectList)
                     // 生成文件
                     generatorFile(project, analysisMap)
-                    // todo collect layout 中自定义 View 的引用分析
                 }
             }
         }

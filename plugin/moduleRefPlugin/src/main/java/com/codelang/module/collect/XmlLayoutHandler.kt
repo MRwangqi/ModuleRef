@@ -3,7 +3,7 @@ package com.codelang.module.collect
 import org.xml.sax.Attributes
 import org.xml.sax.helpers.DefaultHandler
 
-class LayoutXmlHandler : DefaultHandler() {
+class XmlLayoutHandler : DefaultHandler() {
     var views = HashSet<String>(4)
     override fun startElement(
         uri: String,

@@ -7,6 +7,7 @@ import com.codelang.module.bean.Clazz
 import com.codelang.module.bean.Collect
 import com.codelang.module.bean.ModuleData
 import org.gradle.api.Project
+import org.gradle.api.artifacts.ResolvableDependencies
 import org.objectweb.asm.ClassReader
 import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.ClassNode
@@ -26,8 +27,8 @@ object ClazzCollectModule {
      * 收集 clazz，aList 为需要参与指令分析的 clazz，nList 为不需要参与指令分析的 clazz
      * @return
      */
-    fun collectClazz(project: Project, configurationName: String): Collect {
-        val aList = getAnalysisClazz(project, configurationName)
+    fun collectClazz(project: Project, resolvableDeps: ResolvableDependencies): Collect {
+        val aList = getAnalysisClazz(project, resolvableDeps)
         val nList = getNoneAnalysisClazz(project)
         return Collect(aList, nList)
     }
@@ -35,8 +36,8 @@ object ClazzCollectModule {
     /**
      * 获取需要参与指令解析的 clazz
      */
-    private fun getAnalysisClazz(project: Project, configurationName: String): List<Clazz> {
-        val jarData = collectDepJarModule(project, configurationName)
+    private fun getAnalysisClazz(project: Project,resolvableDeps: ResolvableDependencies): List<Clazz> {
+        val jarData = collectDepJarModule(project, resolvableDeps)
         return parseClazz(jarData)
     }
 
@@ -70,9 +71,7 @@ object ClazzCollectModule {
     /**
      * 收集依赖 jar module
      */
-    private fun collectDepJarModule(project: Project, configurationName: String): List<ModuleData> {
-        val resolvableDeps =
-            project.configurations.getByName(configurationName).incoming
+    private fun collectDepJarModule(project: Project, resolvableDeps: ResolvableDependencies): List<ModuleData> {
         // 获取 dependencies class.jar
         return resolvableDeps.artifactView { conf ->
             conf.attributes { attr ->
