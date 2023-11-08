@@ -6,8 +6,10 @@ import com.codelang.module.bean.Clazz
 import com.codelang.module.bean.Collect
 import com.codelang.module.bean.UnsolvedData
 import com.codelang.module.bean.XmlModuleData
+import com.codelang.module.extension.ModuleRefExtension
 import org.objectweb.asm.tree.FieldInsnNode
 import org.objectweb.asm.tree.MethodInsnNode
+import java.util.regex.Pattern
 
 object AnalysisModule {
 
@@ -17,15 +19,22 @@ object AnalysisModule {
      */
     private val analysisMap = hashMapOf<String, AnalysisData>()
 
-    fun analysis(collect: Collect, xmlCollectList: List<XmlModuleData>): Map<String, AnalysisData> {
+    private var moduleRefExtension: ModuleRefExtension? = null
+    fun analysis(
+        collect: Collect,
+        xmlCollectList: List<XmlModuleData>,
+        moduleRefExtension: ModuleRefExtension
+    ): Map<String, AnalysisData> {
+        this.moduleRefExtension = moduleRefExtension
+
         // 将 list 转成 map,方便后续查找 class
         val clazzMap = hashMapOf<String, Clazz>()
-
         collect.nList.forEach {
             clazzMap[it.className!!] = it
         }
         collect.aList.forEach {
             if (clazzMap.contains(it.className)) {
+                // 检查重复 class
                 throw RuntimeException("Duplicate class ${it.className} :" + it.moduleData?.dep + " and " + clazzMap[it.className]?.moduleData?.dep)
             }
             clazzMap[it.className!!] = it
@@ -102,7 +111,7 @@ object AnalysisModule {
                     depRefRecord(clazz, clazzMap[clzName]!!.moduleData!!.dep)
                 } else {
                     // 没找到该字段
-                    unsolvedFieldRecord(clazz, "${clazz.className}_" + clzName)
+                    unsolvedFieldRecord(clazz, clzName)
                 }
             }
         }
@@ -193,9 +202,16 @@ object AnalysisModule {
         }
     }
 
-    private fun depRefRecord(clazz: Clazz, refDep:String) {
+    private fun depRefRecord(clazz: Clazz, refDep: String) {
         // 处于黑名单的依赖不记录
         if (Constants.blackList.contains(refDep)) {
+            return
+        }
+        // dep 节点不在白名单里面的话，不记录
+        val findDep = moduleRefExtension?.entryModule?.find {
+            Pattern.compile(it).matcher(clazz.moduleData!!.dep).matches()
+        }
+        if (findDep != null) {
             return
         }
 
@@ -214,6 +230,22 @@ object AnalysisModule {
     }
 
     private fun unsolvedClazzRecord(dep: String, clazzError: String) {
+        // dep 节点不在白名单里面的话，不记录
+        val findDep = moduleRefExtension?.entryModule?.find {
+            Pattern.compile(it).matcher(dep).matches()
+        }
+        if (findDep != null) {
+            return
+        }
+
+        // 忽略的类不记录
+        val findClazz = moduleRefExtension?.ignoreClazz?.find {
+            Pattern.compile(it).matcher(clazzError.replace("/", ".")).matches()
+        }
+        if (findClazz != null) {
+            return
+        }
+
         var analysisData = analysisMap[dep]
         if (analysisData == null) {
             analysisData = AnalysisData()
@@ -230,6 +262,22 @@ object AnalysisModule {
     }
 
     private fun unsolvedFieldRecord(clazz: Clazz, filedError: String) {
+        // dep 节点不在白名单里面的话，不记录
+        val findDep = moduleRefExtension?.entryModule?.find {
+            Pattern.compile(it).matcher(clazz.moduleData?.dep!!).matches()
+        }
+        if (findDep != null) {
+            return
+        }
+
+        // 忽略的类不记录
+        val findClazz = moduleRefExtension?.ignoreClazz?.find {
+            Pattern.compile(it).matcher(filedError.replace("/", ".")).matches()
+        }
+        if (findClazz != null) {
+            return
+        }
+
         var analysisData = analysisMap[clazz.moduleData?.dep]
         if (analysisData == null) {
             analysisData = AnalysisData()
@@ -246,6 +294,22 @@ object AnalysisModule {
     }
 
     private fun unsolvedMethodRecord(clazz: Clazz, methodError: String) {
+        // dep 节点不在白名单里面的话，不记录
+        val findDep = moduleRefExtension?.entryModule?.find {
+            Pattern.compile(it).matcher(clazz.moduleData?.dep!!).matches()
+        }
+        if (findDep != null) {
+            return
+        }
+
+        // 忽略的类不记录
+        val findClazz = moduleRefExtension?.ignoreClazz?.find {
+            Pattern.compile(it).matcher(methodError.replace("/", ".")).matches()
+        }
+        if (findClazz != null) {
+            return
+        }
+
         var analysisData = analysisMap[clazz.moduleData?.dep]
         if (analysisData == null) {
             analysisData = AnalysisData()
@@ -261,7 +325,6 @@ object AnalysisModule {
     }
 
     private fun getClassName(desc: String): String? {
-
         var clazzName = desc
         // [java/util/ArrayList;  数组对象，也有可能是 [[java/util/ArrayList;
         if (clazzName.startsWith("[")) {
@@ -271,7 +334,6 @@ object AnalysisModule {
         if (clazzName.startsWith("L")) {
             return clazzName.substring(1, clazzName.length - 1)
         }
-
         // 基础类型不关心，直接返回 null
         return null
     }

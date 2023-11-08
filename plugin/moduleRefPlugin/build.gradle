@@ -18,7 +18,7 @@ dependencies {
 gradlePlugin {
     plugins {
         version {
-            id = 'moduleRefPlugin'
+            id = 'moduleRef'
             implementationClass = 'com.codelang.module.ModuleRefPlugin'
         }
     }

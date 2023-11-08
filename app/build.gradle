@@ -1,8 +1,15 @@
 plugins {
     id 'com.android.application'
     id 'org.jetbrains.kotlin.android'
-    id 'moduleRefPlugin'
+    id 'moduleRef'
 }
+
+moduleRefConfig{
+    entryModule = ['androidx\\.compose\\..*']
+    ignoreClazz = ["androidx.compose.animation.tooling.ComposeAnimation",
+                   "androidx.compose.animation.tooling.ComposeAnimation"]
+}
+
 
 android {
     namespace 'com.codelang.moduleref'

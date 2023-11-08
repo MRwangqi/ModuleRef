@@ -1,10 +1,10 @@
 package com.codelang.module
 
-import com.android.build.gradle.internal.publishing.AndroidArtifacts
 import com.codelang.module.analysis.AnalysisModule
 import com.codelang.module.bean.AnalysisData
 import com.codelang.module.collect.ClazzCollectModule
 import com.codelang.module.collect.XmlCollectModule
+import com.codelang.module.extension.ModuleRefExtension
 import com.google.gson.Gson
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -16,6 +16,7 @@ class ModuleRefPlugin : Plugin<Project> {
     companion object {
         const val TASK_NAME = "moduleRef"
         const val BUILD = "build"
+        const val EXT_NAME = "moduleRefConfig"
     }
 
 
@@ -29,8 +30,12 @@ class ModuleRefPlugin : Plugin<Project> {
             "debug"
         }
 
+        project.extensions.create(EXT_NAME, ModuleRefExtension::class.java)
+
         project.afterEvaluate {
             val configurationName = "${build}RuntimeClasspath"
+            val moduleRefExtension = project.extensions.findByName(EXT_NAME) as ModuleRefExtension
+
             project.tasks.create(TASK_NAME) {
                 it.doLast {
                     val resolvableDeps =
@@ -42,7 +47,8 @@ class ModuleRefPlugin : Plugin<Project> {
                     val xmlCollectList =
                         XmlCollectModule.collectDepLayoutModule(project, resolvableDeps)
                     // 分析 class、xml 文件的引用情况
-                    val analysisMap = AnalysisModule.analysis(collect, xmlCollectList)
+                    val analysisMap =
+                        AnalysisModule.analysis(collect, xmlCollectList, moduleRefExtension)
                     // 生成文件
                     generatorFile(project, analysisMap)
                 }
