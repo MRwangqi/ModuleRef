@@ -20,20 +20,17 @@ class ModuleRefPlugin : Plugin<Project> {
 
 
     override fun apply(project: Project) {
-        // ./gradlew classAnalysis -Pbuild=debug
-//        val params = project.gradle.startParameter.projectProperties
-//
-//        val build = if (params.containsKey(BUILD)) {
-//            params[BUILD] ?: "debug"
-//        } else {
-//            // 默认 debug 兜底
-//            "debug"
-//        }
-
+        // ./gradlew moduleRef -Pbuild=debug
+        val params = project.gradle.startParameter.projectProperties
+        val build = if (params.containsKey(BUILD)) {
+            params[BUILD] ?: "debug"
+        } else {
+            // 默认 debug 兜底
+            "debug"
+        }
 
         project.afterEvaluate {
-            // todo 暂时写死 debugRuntimeClasspath，后续需要根据 buildType 动态获取
-            val configurationName = "debugRuntimeClasspath"
+            val configurationName = "${build}RuntimeClasspath"
             project.tasks.create(TASK_NAME) {
                 it.doLast {
                     val resolvableDeps =
