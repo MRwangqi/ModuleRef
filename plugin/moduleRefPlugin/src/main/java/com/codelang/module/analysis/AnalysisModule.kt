@@ -111,7 +111,11 @@ object AnalysisModule {
                     depRefRecord(clazz, clazzMap[clzName]!!.moduleData!!.dep)
                 } else {
                     // 没找到该字段
-                    unsolvedFieldRecord(clazz, clzName)
+                    unsolvedFieldRecord(
+                        clazz,
+                        clzName ?: "",
+                        "${clazz.className}_${clzName}"
+                    )
                 }
             }
         }
@@ -124,6 +128,7 @@ object AnalysisModule {
                 .filterIsInstance(MethodInsnNode::class.java)
                 .forEach Continue@{ node ->
                     val ownerName = getClassName(node.owner)
+
                     if (ownerName == null) {
                         return@Continue
                     }
@@ -153,6 +158,7 @@ object AnalysisModule {
                         } else {
                             unsolvedMethodRecord(
                                 clazz,
+                                clzName ?: "",
                                 "${clazz.className}_${ownerName}.${node.name}(${node.desc})"
                             )
                         }
@@ -192,7 +198,8 @@ object AnalysisModule {
                         } else {
                             unsolvedMethodRecord(
                                 clazz,
-                                "${clazz.className}_${ownerName}.${node.name}(${node.desc})"
+                                clzName ?: "",
+                                "${clzName}_${clazz.className}.${ownerName}.${node.name}(${node.desc})"
                             )
                         }
                     } else {
@@ -203,15 +210,12 @@ object AnalysisModule {
     }
 
     private fun depRefRecord(clazz: Clazz, refDep: String) {
-        // 处于黑名单的依赖不记录
+        // 处于内部黑名单的依赖不记录
         if (Constants.blackList.contains(refDep)) {
             return
         }
-        // dep 节点不在白名单里面的话，不记录
-        val findDep = moduleRefExtension?.entryModule?.find {
-            Pattern.compile(it).matcher(clazz.moduleData!!.dep).matches()
-        }
-        if (findDep != null) {
+
+        if (!isMatchEntryModule(clazz.moduleData!!.dep)) {
             return
         }
 
@@ -230,19 +234,12 @@ object AnalysisModule {
     }
 
     private fun unsolvedClazzRecord(dep: String, clazzError: String) {
-        // dep 节点不在白名单里面的话，不记录
-        val findDep = moduleRefExtension?.entryModule?.find {
-            Pattern.compile(it).matcher(dep).matches()
-        }
-        if (findDep != null) {
+        // 忽略的类不记录
+        if (isIgnoreClass(clazzError)) {
             return
         }
 
-        // 忽略的类不记录
-        val findClazz = moduleRefExtension?.ignoreClazz?.find {
-            Pattern.compile(it).matcher(clazzError.replace("/", ".")).matches()
-        }
-        if (findClazz != null) {
+        if (!isMatchEntryModule(dep)) {
             return
         }
 
@@ -255,26 +252,19 @@ object AnalysisModule {
         if (analysisData.unsolved == null) {
             analysisData.unsolved = UnsolvedData()
         }
-        if (analysisData.unsolved!!.clazz.contains(clazzError)) {
+        val error = clazzError.replace("/", ".")
+        if (analysisData.unsolved!!.clazz.contains(error)) {
             return
         }
-        analysisData.unsolved!!.clazz.add(clazzError.replace("/", "."))
+        analysisData.unsolved!!.clazz.add(error)
     }
 
-    private fun unsolvedFieldRecord(clazz: Clazz, filedError: String) {
-        // dep 节点不在白名单里面的话，不记录
-        val findDep = moduleRefExtension?.entryModule?.find {
-            Pattern.compile(it).matcher(clazz.moduleData?.dep!!).matches()
-        }
-        if (findDep != null) {
+    private fun unsolvedFieldRecord(clazz: Clazz, filedClazz: String, filedError: String) {
+        if (isIgnoreClass(filedClazz)) {
             return
         }
 
-        // 忽略的类不记录
-        val findClazz = moduleRefExtension?.ignoreClazz?.find {
-            Pattern.compile(it).matcher(filedError.replace("/", ".")).matches()
-        }
-        if (findClazz != null) {
+        if (!isMatchEntryModule(clazz.moduleData!!.dep)) {
             return
         }
 
@@ -286,27 +276,21 @@ object AnalysisModule {
         if (analysisData.unsolved == null) {
             analysisData.unsolved = UnsolvedData()
         }
-        if (analysisData.unsolved!!.fields.contains(filedError)) {
+
+        val error = filedError.replace("/", ".")
+        if (analysisData.unsolved!!.fields.contains(error)) {
             return
         }
-
-        analysisData.unsolved!!.fields.add(filedError.replace("/", "."))
+        analysisData.unsolved!!.fields.add(error)
     }
 
-    private fun unsolvedMethodRecord(clazz: Clazz, methodError: String) {
-        // dep 节点不在白名单里面的话，不记录
-        val findDep = moduleRefExtension?.entryModule?.find {
-            Pattern.compile(it).matcher(clazz.moduleData?.dep!!).matches()
-        }
-        if (findDep != null) {
+    private fun unsolvedMethodRecord(clazz: Clazz, methodClazz: String, methodError: String) {
+        // 忽略的类不记录
+        if (isIgnoreClass(methodClazz)) {
             return
         }
 
-        // 忽略的类不记录
-        val findClazz = moduleRefExtension?.ignoreClazz?.find {
-            Pattern.compile(it).matcher(methodError.replace("/", ".")).matches()
-        }
-        if (findClazz != null) {
+        if (!isMatchEntryModule(clazz.moduleData!!.dep)) {
             return
         }
 
@@ -318,10 +302,12 @@ object AnalysisModule {
         if (analysisData.unsolved == null) {
             analysisData.unsolved = UnsolvedData()
         }
-        if (analysisData.unsolved!!.methods.contains(methodError)) {
+
+        val error = methodError.replace("/", ".")
+        if (analysisData.unsolved!!.methods.contains(error)) {
             return
         }
-        analysisData.unsolved!!.methods.add(methodError.replace("/", "."))
+        analysisData.unsolved!!.methods.add(error)
     }
 
     private fun getClassName(desc: String): String? {
@@ -334,7 +320,36 @@ object AnalysisModule {
         if (clazzName.startsWith("L")) {
             return clazzName.substring(1, clazzName.length - 1)
         }
+
+        if (clazzName.contains("/")) {
+            return clazzName
+        }
         // 基础类型不关心，直接返回 null
         return null
+    }
+
+
+    private fun isIgnoreClass(clazz: String): Boolean {
+        val ignoreList = moduleRefExtension?.ignoreClazz
+        if (ignoreList.isNullOrEmpty()) {
+            return false
+        }
+        // 忽略的类不记录
+        val findClazz = moduleRefExtension?.ignoreClazz?.find {
+            Pattern.compile(it).matcher(clazz.replace("/", ".")).matches()
+        }
+        return findClazz != null
+    }
+
+    private fun isMatchEntryModule(dep: String): Boolean {
+        val entryModule = moduleRefExtension?.entryModule
+        if (entryModule.isNullOrEmpty()) {
+            // 没有配置 entryModule 的话，则全部记录
+            return true
+        }
+        val findDep = moduleRefExtension?.entryModule?.find {
+            Pattern.compile(it).matcher(dep).matches()
+        }
+        return findDep != null
     }
 }

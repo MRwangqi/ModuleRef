@@ -4,10 +4,11 @@ plugins {
     id 'moduleRef'
 }
 
-moduleRefConfig{
-    entryModule = ['androidx\\.compose\\..*']
-    ignoreClazz = ["androidx.compose.animation.tooling.ComposeAnimation",
-                   "androidx.compose.animation.tooling.ComposeAnimation"]
+moduleRefConfig {
+//    entryModule = ['androidx.\\.compose\\..*']
+    ignoreClazz = [".*\\.R",
+                   ".*\\.R\\\$.*",
+                   ".*\\.BuildConfig"]
 }
 
 
