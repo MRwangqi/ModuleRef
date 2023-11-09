@@ -5,7 +5,7 @@ plugins {
 }
 
 moduleRefConfig {
-//    entryModule = ['androidx.\\.compose\\..*']
+//    entryModule = ['androidx.core:core:1.8.0']
     ignoreClazz = [".*\\.R",
                    ".*\\.R\\\$.*",
                    ".*\\.BuildConfig"]

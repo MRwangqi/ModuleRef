@@ -127,85 +127,118 @@ object AnalysisModule {
             it.instructions
                 .filterIsInstance(MethodInsnNode::class.java)
                 .forEach Continue@{ node ->
-                    val ownerName = getClassName(node.owner)
-
-                    if (ownerName == null) {
-                        return@Continue
-                    }
-                    if (clazzMap.contains(ownerName)) {
-                        var isFound = false
-                        var clzName = ownerName
-                        while (clzName != null) {
-                            val clz = clazzMap[clzName] // 可能为 null，因为会存在父类也找不到的情况
-                            if (clz == null) {
-                                unsolvedClazzRecord(clazz.moduleData!!.dep, clzName)
-                            }
-                            //  遍历 clz 的 method 是否能匹配上
-                            val m =
-                                clz?.methods?.firstOrNull { it.name == node.name && it.desc == node.desc }
-                            if (m == null) {
-                                // 找不到的话，尝试从父类上面找，直到父类也找不带该方法
-                                clzName = clz?.superName
-                            } else {
-                                isFound = true
-                                break
-                            }
+                    val ownerName = getClassName(node.owner) ?: return@Continue
+                    // 检查 owner 是否存在
+                    getMethodRefClazz(clazzMap, clazz, ownerName, node.name, node.desc, true)
+                        ?.let { clz ->
+                            depRefRecord(clazz, clazzMap[clz]!!.moduleData!!.dep)
                         }
-
-                        if (isFound) {
-                            // 记录当前类引用与方法的关系 clzName 与 clazz 的关系
-                            depRefRecord(clazz, clazzMap[clzName]!!.moduleData!!.dep)
-                        } else {
-                            unsolvedMethodRecord(
-                                clazz,
-                                clzName ?: "",
-                                "${clazz.className}_${ownerName}.${node.name}(${node.desc})"
-                            )
-                        }
-                    } else {
-                        unsolvedClazzRecord(clazz.moduleData!!.dep, ownerName)
-                    }
                 }
             it.instructions
                 .filterIsInstance(FieldInsnNode::class.java)
                 .forEach Continue@{ node ->
-                    val ownerName = getClassName(node.owner)
-                    if (ownerName == null) {
-                        return@Continue
-                    }
-                    if (clazzMap.contains(ownerName)) {
-                        var isFound = false
-                        var clzName = ownerName
-                        while (clzName != null) {
-                            val clz = clazzMap[clzName]  // 可能为 null，因为会存在父类也不存在的情况
-                            if (clz == null) {
-                                unsolvedClazzRecord(clazz.moduleData!!.dep, clzName ?: "")
-                            }
-                            //  遍历 clz 的 method 是否能匹配上
-                            val f =
-                                clz?.fields?.firstOrNull { it.name == node.name && it.desc == node.desc }
-                            if (f == null) {
-                                // 如果找不到，尝试从父类上面找，直到父类也找不到该方法
-                                clzName = clz?.superName
-                            } else {
-                                isFound = true
-                                break
-                            }
+                    val ownerName = getClassName(node.owner)?:return@Continue
+                    // 检查 owner 是否存在
+                    getMethodRefClazz(clazzMap, clazz, ownerName, node.name, node.desc, false)
+                        ?.let { clz ->
+                            depRefRecord(clazz, clazzMap[clz]!!.moduleData!!.dep)
                         }
-                        if (isFound) {
-                            // 记录当前类引用与方法的关系 clzName 与 clazz 的关系
-                            depRefRecord(clazz, clazzMap[clzName]!!.moduleData!!.dep)
-                        } else {
-                            unsolvedMethodRecord(
-                                clazz,
-                                clzName ?: "",
-                                "${clzName}_${clazz.className}.${ownerName}.${node.name}(${node.desc})"
-                            )
-                        }
-                    } else {
-                        unsolvedClazzRecord(clazz.moduleData!!.dep, ownerName)
-                    }
                 }
+        }
+    }
+
+    private fun getMethodRefClazz(
+        clazzMap: Map<String, Clazz>,
+        clazz: Clazz,
+        ownerName: String,
+        name: String?,
+        desc: String?,
+        isMethod: Boolean
+    ): String? {
+
+        val clz = clazzMap[ownerName]
+        // 因为会存在类也不存在的情况
+        if (clz == null) {
+            unsolvedClazzRecord(clazz.moduleData!!.dep, ownerName)
+            return null
+        }
+
+        // 检查当前类是否能匹配上
+        val found:Any? = if (isMethod) {
+            clz.methods?.firstOrNull { it.name == name && it.desc == desc }
+        }else{
+            clz.fields?.firstOrNull { it.name == name && it.desc == desc }
+        }
+        if (found != null) {
+            // 找到的话，则直接返回
+            return ownerName
+        }
+
+        // 遍历父类是否能找到
+        val superList = arrayListOf<Clazz?>()
+        dfsClazz(clazzMap, clz, superList)
+        for (i in 0 until superList.size) {
+            val clz = superList[i]
+            val found:Any? = if (isMethod) {
+                clz?.methods?.firstOrNull { it.name == name && it.desc == desc }
+            }else{
+                clz?.fields?.firstOrNull { it.name == name && it.desc == desc }
+            }
+            if (found != null) {
+                // 找到的话，则直接返回
+                return clz?.className
+            }
+        }
+
+        // 遍历接口是否能找到
+        val interfaceList = arrayListOf<Clazz?>()
+        dfsInterface(clazzMap, clz, interfaceList)
+        for (i in 0 until interfaceList.size) {
+            val clz = interfaceList[i]
+            val found:Any? = if (isMethod) {
+                clz?.methods?.firstOrNull { it.name == name && it.desc == desc }
+            }else{
+                clz?.fields?.firstOrNull { it.name == name && it.desc == desc }
+            }
+            if (found != null) {
+                // 找到的话，则直接返回
+                return clz?.className
+            }
+        }
+
+        // 找不到的话，记录 unsolved
+        if (isMethod){
+            unsolvedMethodRecord(
+                clazz,
+                clazz.className?:"",
+                "${ownerName}.${name}(${desc})"
+            )
+        }else{
+            unsolvedFieldRecord(
+                clazz,
+                clazz.className ?: "",
+                "${ownerName}.${name}(${desc})"
+            )
+        }
+
+        return null
+    }
+
+    private fun dfsInterface(clazzMap: Map<String, Clazz>, clazz: Clazz?, list: ArrayList<Clazz?>) {
+        val interfaces = clazz?.interfaces
+        if (!interfaces.isNullOrEmpty()) {
+            interfaces.forEach {
+                list.add(clazzMap[it])
+                dfsInterface(clazzMap, clazzMap[it], list)
+            }
+        }
+    }
+
+    private fun dfsClazz(clazzMap: Map<String, Clazz>, clazz: Clazz?, list: ArrayList<Clazz?>) {
+        val superName = clazz?.superName
+        if (superName != null) {
+            list.add(clazzMap[superName])
+            dfsClazz(clazzMap, clazzMap[superName], list)
         }
     }
 
