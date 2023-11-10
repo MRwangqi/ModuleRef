@@ -5,6 +5,7 @@ import com.codelang.module.bean.AnalysisData
 import com.codelang.module.collect.ClazzCollectModule
 import com.codelang.module.collect.XmlCollectModule
 import com.codelang.module.extension.ModuleRefExtension
+import com.codelang.module.file.ModuleRefFile
 import com.google.gson.Gson
 import org.gradle.api.Plugin
 import org.gradle.api.Project
@@ -50,46 +51,9 @@ class ModuleRefPlugin : Plugin<Project> {
                     val analysisMap =
                         AnalysisModule.analysis(collect, xmlCollectList, moduleRefExtension)
                     // 生成文件
-                    generatorFile(project, analysisMap)
-                    generatorPlantUML(project, analysisMap)
+                    ModuleRefFile.generatorFile(project, analysisMap)
                 }
             }
         }
-    }
-
-
-    private fun generatorFile(project: Project, analysisMap: Map<String, AnalysisData>) {
-        // 生成文件
-        val text = Gson().toJson(analysisMap)
-        if (!project.buildDir.exists()) {
-            project.buildDir.mkdir()
-        }
-        val outputFile = File(project.buildDir.absolutePath + File.separator + "moduleRef.json")
-        outputFile.writeText(text)
-
-        println("配置文件生成----> $outputFile")
-    }
-
-
-    private fun generatorPlantUML(project: Project, analysisMap: Map<String, AnalysisData>){
-        if (!project.buildDir.exists()) {
-            project.buildDir.mkdir()
-        }
-        val outputFile = File(project.buildDir.absolutePath + File.separator + "moduleRef.puml")
-
-        if (outputFile.exists()){
-            outputFile.delete()
-        }
-
-        outputFile.appendText("@startuml\n")
-        analysisMap.forEach {
-            val dep = it.key
-            it.value.dependencies.forEach {
-                outputFile.appendText("(${dep}) --> (${it})\n")
-            }
-        }
-        outputFile.appendText("@enduml\n")
-
-        println("配置文件生成----> $outputFile")
     }
 }
