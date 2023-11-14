@@ -5,7 +5,29 @@
 
 
 ## 插件介绍
-通过字节码来分析依赖之间的真实引用关系,分析效果如下，具体可查看 [moduleRef.json](./moduleRef.json) 文件
+插件接入(暂时还没对外发布插件，可以先跑该 demo)：
+```
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+    id 'moduleRef'
+}
+moduleRefConfig {
+    // 设置只分析的依赖模块，如果不设置，则默认分析所有依赖模块，支持正则表达式
+    entryModule = ['androidx\\.compose\\.ui\\:.*']
+    // 设置忽略检查的类
+    ignoreClazz = [".*\\.R",
+                   ".*\\.R\\\$.*",
+                   ".*\\.BuildConfig"]
+}
+
+```
+执行命令:
+> ./gradlew moduleRef 
+
+执行完成后会在 app/build 目录生成 [moduleRef.json](./moduleRef.json) 文件
+
+该插件会通过字节码来分析依赖之间的真实引用关系,分析效果如下:
 
 ```json
 {
