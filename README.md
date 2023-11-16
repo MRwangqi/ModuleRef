@@ -5,7 +5,18 @@
 
 
 ## 插件介绍
-插件接入(暂时还没对外发布插件，可以先跑该 demo)：
+插件接入：
+```
+buildscript {
+    repositories {
+        maven { url "https://raw.githubusercontent.com/MRwangqi/Maven/main" }
+    }
+    dependencies {
+        classpath "com.github.MRwangqi:moduleRefPlugin:1.0.0"
+    }
+}
+```
+在 app/build.gradle 中添加插件：
 ```
 plugins {
     id 'com.android.application'
