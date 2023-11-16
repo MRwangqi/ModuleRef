@@ -7,8 +7,12 @@ import com.codelang.module.bean.Collect
 import com.codelang.module.bean.UnsolvedData
 import com.codelang.module.bean.XmlModuleData
 import com.codelang.module.extension.ModuleRefExtension
+import com.codelang.module.ktx.isAbstract
+import com.codelang.module.ktx.isInterface
+import org.objectweb.asm.Opcodes
 import org.objectweb.asm.tree.FieldInsnNode
 import org.objectweb.asm.tree.MethodInsnNode
+import org.objectweb.asm.tree.MethodNode
 import java.util.regex.Pattern
 
 object AnalysisModule {
@@ -19,12 +23,14 @@ object AnalysisModule {
      */
     private val analysisMap = hashMapOf<String, AnalysisData>()
 
+    private val absMethodMap = hashMapOf<String, ArrayList<String>>()
+
     private var moduleRefExtension: ModuleRefExtension? = null
     fun analysis(
         collect: Collect,
         xmlCollectList: List<XmlModuleData>,
         moduleRefExtension: ModuleRefExtension
-    ): Map<String, AnalysisData> {
+    ): Pair<Map<String, AnalysisData>,Map<String, ArrayList<String>>> {
         this.moduleRefExtension = moduleRefExtension
 
         // 将 list 转成 map,方便后续查找 class
@@ -59,7 +65,12 @@ object AnalysisModule {
             }
         }
 
-        return analysisMap
+        // 分析 AbstractMethodError
+        collect.aList.forEach {
+            analysisAbstractError(it, clazzMap)
+        }
+
+        return Pair(analysisMap,absMethodMap)
     }
 
     /**
@@ -137,7 +148,7 @@ object AnalysisModule {
             it.instructions
                 .filterIsInstance(FieldInsnNode::class.java)
                 .forEach Continue@{ node ->
-                    val ownerName = getClassName(node.owner)?:return@Continue
+                    val ownerName = getClassName(node.owner) ?: return@Continue
                     // 检查 owner 是否存在
                     getMethodRefClazz(clazzMap, clazz, ownerName, node.name, node.desc, false)
                         ?.let { clz ->
@@ -146,6 +157,95 @@ object AnalysisModule {
                 }
         }
     }
+
+    /**
+     * todo 1、当前并非接口、抽象类
+     * todo 2、父类是抽象类或是接口
+     * todo 3、父类中有抽象方法,可能会出现 class:AbstractClass:AbstractClass:Interface 情况，需要递归向上查找抵消 abstract method
+     * todo 4、父类的抽象方法在子类有没有(name、desc 要一致)
+     */
+    private fun analysisAbstractError(clazz: Clazz, clazzMap: Map<String, Clazz>) {
+        // 子类必须实现父类的抽象方法
+        if (clazz.access.isAbstract() || clazz.access.isInterface()) {
+            return
+        }
+
+        if (clazz.className!!.contains("AndroidExceptionPreHandler")){
+            println(clazz.methods?.map { "${it.name}(${it.desc})" })
+        }
+
+        val asbMethodList = arrayListOf<MethodNode>()
+        val abstractList = arrayListOf<Clazz>()
+        // 向上查找所有的抽象类
+        dfsSuperAbstractList(clazz, abstractList, clazzMap)
+        // 将当前类也加入到抽象类列表中，放置第一个
+        abstractList.add(0, clazz)
+
+        abstractList
+            .reversed()// 必须从后往前遍历，因为 父类 的 父类 可能也是抽象类，并且 父类 有可能实现 父类的父类 抽象方法
+            .forEach { clz ->
+                val interfaces = arrayListOf<Clazz?>()
+                dfsInterface(clazzMap, clz, interfaces)
+
+                // 获取接口的所有抽象方法，并去重处理，因为接口允许存在相同的抽象方法
+                val interfaceAbsMethod = interfaces.filterNotNull().map {
+                    it.methods?.filter { it.access.isAbstract() } ?: arrayListOf()
+                }.flatten().distinctBy { it.name+it.desc }.toMutableList()
+
+                // 子接口可以通过 default 实现父类接口方法，所以接口也需要检查下实现方法，如果有实现，则移除
+                interfaces.filterNotNull().map { it.methods?: arrayListOf() }
+                    .flatten().filter { !it.access.isAbstract()}
+                    .forEach {node->
+                        val findMethod = interfaceAbsMethod.find { it.name == node.name && it.desc == node.desc }
+                        if (findMethod != null) {
+                            interfaceAbsMethod.remove(findMethod)
+                        }
+                    }
+
+                // 获取抽象类的所有抽象方法
+                val clazzAbsMethod =
+                    clz.methods?.filter { it.access.isAbstract() }?.toList() ?: arrayListOf()
+                // 存储全局抽象方法
+                asbMethodList.addAll(interfaceAbsMethod)
+                asbMethodList.addAll(clazzAbsMethod)
+
+                // 遍历方法有无实现抽象方法
+                clz.methods?.filter { !it.access.isAbstract() }?.forEach { node ->
+                    val findMethod =
+                        asbMethodList.find { it.name == node.name && it.desc == node.desc }
+                    if (findMethod != null) {
+                        // 如果找到的话，说明已经实现，则移除这个抽象方法
+                        asbMethodList.remove(findMethod)
+                    } else {
+                        // 没找到的话，说明当前抽象类没有实现，需要去子类继续查找，该功能由上面的 reversed 自动实现
+                    }
+                }
+            }
+        if (asbMethodList.isNotEmpty()) {
+            // 如果有剩余，说明存在没有实现的抽象方法，发生了 AbstractMethodError，需要记录
+            asbMethodList.forEach {
+                recordAbsMethodError(clazz, "${clazz.className}.${it.name}(${it.desc})")
+            }
+        }
+    }
+
+    private fun dfsSuperAbstractList(
+        clazz: Clazz?,
+        list: ArrayList<Clazz>,
+        clazzMap: Map<String, Clazz>
+    ) {
+        val superName = clazz?.superName
+        if (superName != null) {
+            val superClazz = clazzMap[superName]
+            if (superClazz != null) {
+                if (superClazz.access.isAbstract()) {
+                    list.add(superClazz)
+                }
+                dfsSuperAbstractList(superClazz, list, clazzMap)
+            }
+        }
+    }
+
 
     private fun getMethodRefClazz(
         clazzMap: Map<String, Clazz>,
@@ -164,9 +264,9 @@ object AnalysisModule {
         }
 
         // 检查当前类是否能匹配上
-        val found:Any? = if (isMethod) {
+        val found: Any? = if (isMethod) {
             clz.methods?.firstOrNull { it.name == name && it.desc == desc }
-        }else{
+        } else {
             clz.fields?.firstOrNull { it.name == name && it.desc == desc }
         }
         if (found != null) {
@@ -179,9 +279,9 @@ object AnalysisModule {
         dfsClazz(clazzMap, clz, superList)
         for (i in 0 until superList.size) {
             val clz = superList[i]
-            val found:Any? = if (isMethod) {
+            val found: Any? = if (isMethod) {
                 clz?.methods?.firstOrNull { it.name == name && it.desc == desc }
-            }else{
+            } else {
                 clz?.fields?.firstOrNull { it.name == name && it.desc == desc }
             }
             if (found != null) {
@@ -195,9 +295,9 @@ object AnalysisModule {
         dfsInterface(clazzMap, clz, interfaceList)
         for (i in 0 until interfaceList.size) {
             val clz = interfaceList[i]
-            val found:Any? = if (isMethod) {
+            val found: Any? = if (isMethod) {
                 clz?.methods?.firstOrNull { it.name == name && it.desc == desc }
-            }else{
+            } else {
                 clz?.fields?.firstOrNull { it.name == name && it.desc == desc }
             }
             if (found != null) {
@@ -207,13 +307,13 @@ object AnalysisModule {
         }
 
         // 找不到的话，记录 unsolved
-        if (isMethod){
+        if (isMethod) {
             unsolvedMethodRecord(
                 clazz,
-                clazz.className?:"",
+                clazz.className ?: "",
                 "${ownerName}.${name}(${desc})"
             )
-        }else{
+        } else {
             unsolvedFieldRecord(
                 clazz,
                 clazz.className ?: "",
@@ -341,6 +441,16 @@ object AnalysisModule {
             return
         }
         analysisData.unsolved!!.methods.add(error)
+    }
+
+
+    private fun recordAbsMethodError(clazz: Clazz, methodError: String) {
+        var list = absMethodMap.get(clazz.moduleData!!.dep)
+        if (list == null) {
+            list = arrayListOf<String>()
+            absMethodMap[clazz.moduleData!!.dep] = list
+        }
+        list.add(methodError)
     }
 
     private fun getClassName(desc: String): String? {

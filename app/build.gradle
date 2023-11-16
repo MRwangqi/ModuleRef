@@ -5,7 +5,7 @@ plugins {
 }
 
 moduleRefConfig {
-//    entryModule = ['androidx\\.compose\\.ui\\:.*']
+//    entryModule = ['androidx\\.activity\\:.*']
     ignoreClazz = [".*\\.R",
                    ".*\\.R\\\$.*",
                    ".*\\.BuildConfig"]

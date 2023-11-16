@@ -12,5 +12,6 @@ data class Clazz(
     var fields: List<FieldNode>? = null,
     var methods: List<MethodNode>? = null,
     var visibleAnnotations: List<AnnotationNode>? = null,
+    var access: Int = 0,
     var moduleData: ModuleData?=null
 )

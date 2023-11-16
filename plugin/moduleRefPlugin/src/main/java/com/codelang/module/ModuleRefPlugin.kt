@@ -48,10 +48,10 @@ class ModuleRefPlugin : Plugin<Project> {
                     val xmlCollectList =
                         XmlCollectModule.collectDepLayoutModule(project, resolvableDeps)
                     // 分析 class、xml 文件的引用情况
-                    val analysisMap =
+                    val analysis =
                         AnalysisModule.analysis(collect, xmlCollectList, moduleRefExtension)
                     // 生成文件
-                    ModuleRefFile.generatorFile(project, analysisMap)
+                    ModuleRefFile.generatorFile(project, analysis)
                 }
             }
         }

@@ -185,5 +185,6 @@ class ClazzNode(private val clazz: Clazz) : ClassNode(Opcodes.ASM9) {
         clazz.fields = fields
         clazz.methods = methods
         clazz.visibleAnnotations = visibleAnnotations
+        clazz.access = access
     }
 }

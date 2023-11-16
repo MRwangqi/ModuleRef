@@ -7,10 +7,25 @@ import java.io.File
 
 object ModuleRefFile {
 
-    fun generatorFile(project: Project, analysisMap: Map<String, AnalysisData>) {
+    fun generatorFile(project: Project, analysis: Pair<Map<String, AnalysisData>,Map<String, ArrayList<String>>>) {
+        val analysisMap = analysis.first
         generatorModuleRef(project, analysisMap)
         generatorPlantUML(project, analysisMap)
         generatorMermaid(project, analysisMap)
+        val absMethodMap = analysis.second
+        generatorAbsMethod(project, absMethodMap)
+    }
+
+    private fun generatorAbsMethod(project: Project, absMethodMap: Map<String, java.util.ArrayList<String>>) {
+        // 生成文件
+        val text = Gson().toJson(absMethodMap)
+        if (!project.buildDir.exists()) {
+            project.buildDir.mkdir()
+        }
+        val outputFile = File(project.buildDir.absolutePath + File.separator + "absMethod.json")
+        outputFile.writeText(text)
+
+        println("配置文件生成----> $outputFile")
     }
 
 
