@@ -25,10 +25,8 @@ gradlePlugin {
 }
 version="1.0.0"
 
-compileJava {
-    sourceCompatibility JavaVersion.VERSION_1_8.toString()
-    targetCompatibility JavaVersion.VERSION_1_8.toString()
-}
+sourceCompatibility = JavaVersion.VERSION_11
+targetCompatibility = JavaVersion.VERSION_11
 
 
 afterEvaluate {
