@@ -26,6 +26,7 @@ object AnalysisModule {
         moduleRefExtension: ModuleRefExtension
     ): Map<String, AnalysisData> {
         this.moduleRefExtension = moduleRefExtension
+        analysisMap.clear()
 
         // 将 list 转成 map,方便后续查找 class
         val clazzMap = hashMapOf<String, Clazz>()
@@ -35,9 +36,11 @@ object AnalysisModule {
         collect.aList.forEach {
             if (clazzMap.contains(it.className)) {
                 // 检查重复 class
-                throw RuntimeException("Duplicate class ${it.className} :" + it.moduleData?.dep + " and " + clazzMap[it.className]?.moduleData?.dep)
+//                throw RuntimeException("Duplicate class ${it.className} :" + it.moduleData?.dep + " and " + clazzMap[it.className]?.moduleData?.dep)
+                println(("Duplicate class ${it.className} :" + it.moduleData?.dep + " and " + clazzMap[it.className]?.moduleData?.dep))
+            }else{
+                clazzMap[it.className!!] = it
             }
-            clazzMap[it.className!!] = it
         }
 
         // 分析 class 引用
