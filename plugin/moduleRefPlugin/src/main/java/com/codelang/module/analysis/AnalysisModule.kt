@@ -55,7 +55,8 @@ object AnalysisModule {
             val dep = data.dep
             data.classes.forEach { clazz ->
                 if (clazzMap.contains(clazz)) {
-                    depRefRecord(clazzMap[clazz]!!, dep)
+                    println(clazz)
+                    depRefRecordXML(dep,clazzMap[clazz]!!.moduleData!!.dep)
                 } else {
                     unsolvedClazzRecord(dep, clazz)
                 }
@@ -261,6 +262,30 @@ object AnalysisModule {
             if (analysisData == null) {
                 analysisData = AnalysisData()
                 analysisMap[clazz.moduleData?.dep!!] = analysisData
+            }
+            // 记录 dep 引用关系
+            if (!analysisData.dependencies.contains(refDep)) {
+                analysisData.dependencies.add(refDep)
+            }
+        }
+    }
+
+
+    private fun depRefRecordXML(dep: String, refDep: String) {
+        // 处于内部黑名单的依赖不记录
+        if (Constants.blackList.contains(refDep)) {
+            return
+        }
+
+        if (!isMatchEntryModule(dep)) {
+            return
+        }
+
+        if (dep != refDep) {
+            var analysisData = analysisMap.get(dep)
+            if (analysisData == null) {
+                analysisData = AnalysisData()
+                analysisMap[dep] = analysisData
             }
             // 记录 dep 引用关系
             if (!analysisData.dependencies.contains(refDep)) {
